@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tree</title>
+  <style>
+    :root{
+      --bg1:#0b1020;
+      --bg2:#111a31;
+      --panel:rgba(9,14,24,.78);
+      --panel-border:rgba(255,255,255,.12);
+      --text:#e8eefc;
+      --muted:#aab6d1;
+      --wood:#5c4334;
+      --wood2:#7a5a45;
+      --leaf:#7fbf7f;
+      --leaf2:#98d898;
+      --grid:rgba(255,255,255,.055);
+      --cell-size:34px;
+      --gap:3px;
+      --shadow:0 16px 40px rgba(0,0,0,.35);
+    }
+
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family: Georgia, "Times New Roman", serif;
+      color:var(--text);
+      background:
+        radial-gradient(circle at 50% 18%, rgba(215,237,255,.16), transparent 28%),
+        linear-gradient(180deg, #1c2747 0%, #0f1830 38%, #09101f 70%, #070b14 100%);
+      overflow:hidden;
+    }
+
+    .app{
+      height:100%;
+      display:grid;
+      grid-template-columns: 360px 1fr;
+      gap:24px;
+      padding:24px;
+      align-items:stretch;
+    }
+
+    .panel{
+      background:var(--panel);
+      border:1px solid var(--panel-border);
+      border-radius:22px;
+      box-shadow:var(--shadow);
+      backdrop-filter: blur(7px);
+      padding:22px 20px;
+      display:flex;
+      flex-direction:column;
+      min-height:0;
+    }
+
+    h1{
+      margin:0 0 8px 0;
+      font-size:2.2rem;
+      letter-spacing:.04em;
+      font-weight:normal;
+    }
+
+    .subtitle{
+      margin:0 0 18px 0;
+      color:var(--muted);
+      line-height:1.45;
+      font-size:1rem;
+    }
+
+    .stat-block{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:12px;
+      margin-bottom:16px;
+    }
+
+    .stat{
+      border:1px solid rgba(255,255,255,.1);
+      border-radius:16px;
+      padding:14px 12px;
+      background:rgba(255,255,255,.035);
+    }
+
+    .stat-label{
+      color:var(--muted);
+      font-size:.92rem;
+      margin-bottom:6px;
+    }
+
+    .stat-value{
+      font-size:1.55rem;
+    }
+
+    .buttons{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:10px;
+      margin-bottom:18px;
+    }
+
+    button{
+      appearance:none;
+      border:none;
+      cursor:pointer;
+      border-radius:16px;
+      padding:12px 14px;
+      font:inherit;
+      font-size:1rem;
+      color:var(--text);
+      background:linear-gradient(180deg, rgba(255,255,255,.12), rgba(255,255,255,.06));
+      border:1px solid rgba(255,255,255,.12);
+      box-shadow:0 6px 18px rgba(0,0,0,.18);
+      transition:transform .12s ease, background .15s ease, border-color .15s ease;
+    }
+
+    button:hover{
+      transform:translateY(-1px);
+      background:linear-gradient(180deg, rgba(255,255,255,.17), rgba(255,255,255,.08));
+      border-color:rgba(255,255,255,.2);
+    }
+
+    button:active{transform:translateY(1px)}
+    button.primary{
+      background:linear-gradient(180deg, rgba(134,187,126,.38), rgba(90,130,86,.22));
+    }
+
+    .mood-box{
+      border:1px solid rgba(255,255,255,.1);
+      border-radius:18px;
+      padding:16px 14px;
+      background:rgba(255,255,255,.035);
+      margin-bottom:16px;
+      min-height:104px;
+    }
+
+    .mood-label{
+      color:var(--muted);
+      font-size:.95rem;
+      margin-bottom:8px;
+    }
+
+    .mood-title{
+      font-size:1.5rem;
+      margin-bottom:6px;
+    }
+
+    .mood-desc{
+      color:#d8e0f0;
+      line-height:1.45;
+      font-size:.98rem;
+    }
+
+    .rules{
+      margin-top:auto;
+      color:var(--muted);
+      line-height:1.5;
+      font-size:.95rem;
+      border-top:1px solid rgba(255,255,255,.1);
+      padding-top:14px;
+    }
+
+    .scene{
+      min-width:0;
+      position:relative;
+      border-radius:28px;
+      border:1px solid rgba(255,255,255,.12);
+      box-shadow:var(--shadow);
+      overflow:hidden;
+      background:
+        radial-gradient(circle at 50% 14%, rgba(255,255,255,.08), transparent 20%),
+        linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.01)),
+        linear-gradient(180deg, #18274a 0%, #111d36 35%, #0b1323 62%, #081018 100%);
+    }
+
+    .scene::before{
+      content:"";
+      position:absolute;
+      inset:auto 0 0 0;
+      height:24%;
+      background:
+        radial-gradient(ellipse at 50% 40%, rgba(25,34,17,.7), transparent 62%),
+        linear-gradient(180deg, rgba(27,40,18,.25), rgba(11,17,9,.65));
+      pointer-events:none;
+    }
+
+    .moon{
+      position:absolute;
+      width:118px;
+      height:118px;
+      top:38px;
+      right:56px;
+      border-radius:50%;
+      background:radial-gradient(circle at 35% 35%, rgba(255,255,255,.95), rgba(220,232,255,.85) 45%, rgba(186,202,236,.35) 68%, rgba(255,255,255,0) 73%);
+      filter:blur(.2px);
+      opacity:.8;
+      pointer-events:none;
+    }
+
+    .grid-wrap{
+      position:absolute;
+      inset:0;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:24px;
+    }
+
+    .grid{
+      position:relative;
+      display:grid;
+      grid-template-columns: repeat(9, var(--cell-size));
+      grid-template-rows: repeat(16, var(--cell-size));
+      gap:var(--gap);
+      padding:16px 18px 26px 18px;
+      border-radius:20px;
+      background:linear-gradient(180deg, rgba(255,255,255,.035), rgba(255,255,255,.02));
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,.05);
+    }
+
+    .grid::after{
+      content:"";
+      position:absolute;
+      left:12px; right:12px; bottom:8px;
+      height:8px;
+      border-radius:999px;
+      background:rgba(255,255,255,.06);
+    }
+
+    .cell{
+      width:var(--cell-size);
+      height:var(--cell-size);
+      border:none;
+      border-radius:10px;
+      background:var(--grid);
+      position:relative;
+      padding:0;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,.03);
+    }
+
+    .cell.valid{
+      background:rgba(159,205,158,.14);
+      box-shadow:
+        inset 0 0 0 1px rgba(184,235,181,.18),
+        0 0 16px rgba(118,180,111,.08);
+    }
+
+    .cell.valid:hover{
+      background:rgba(171,221,170,.22);
+      transform:translateY(-1px);
+    }
+
+    .cell.filled{
+      background:transparent;
+      box-shadow:none;
+      cursor:default;
+    }
+
+    .wood{
+      position:absolute;
+      inset:4px;
+      border-radius:12px;
+      background:
+        linear-gradient(180deg, var(--wood2), var(--wood));
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,.10),
+        0 4px 8px rgba(0,0,0,.22);
+    }
+
+    .wood::after{
+      content:"";
+      position:absolute;
+      inset:6px 10px;
+      border-radius:999px;
+      background:linear-gradient(180deg, rgba(255,255,255,.12), rgba(255,255,255,0));
+      opacity:.35;
+    }
+
+    .tip .wood::before{
+      content:"";
+      position:absolute;
+      width:11px;
+      height:11px;
+      top:-4px;
+      left:50%;
+      transform:translateX(-50%) rotate(45deg);
+      border-radius:3px;
+      background:linear-gradient(180deg, var(--leaf2), var(--leaf));
+      box-shadow:0 0 10px rgba(113,181,111,.28);
+    }
+
+    .status-line{
+      position:absolute;
+      left:26px;
+      bottom:18px;
+      right:26px;
+      text-align:center;
+      color:rgba(234,240,252,.88);
+      font-size:1rem;
+      letter-spacing:.02em;
+      text-shadow:0 2px 8px rgba(0,0,0,.45);
+      pointer-events:none;
+    }
+
+    @media (max-width: 1100px){
+      :root{ --cell-size: 30px; }
+      .app{ grid-template-columns: 320px 1fr; gap:18px; padding:18px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside class="panel">
+      <h1>Tree</h1>
+      <p class="subtitle">
+        Build a beautiful tree on a vertical grid. You have a limited number of growths.
+        Shape matters more than “winning.”
+      </p>
+
+      <div class="stat-block">
+        <div class="stat">
+          <div class="stat-label">Growths Left</div>
+          <div class="stat-value" id="movesLeft">24</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">Branches Placed</div>
+          <div class="stat-value" id="placedCount">1</div>
+        </div>
+      </div>
+
+      <div class="buttons">
+        <button class="primary" id="finishBtn">Finish Tree</button>
+        <button id="resetBtn">New Tree</button>
+      </div>
+
+      <div class="mood-box">
+        <div class="mood-label">Current Reading</div>
+        <div class="mood-title" id="moodTitle">Sapling</div>
+        <div class="mood-desc" id="moodDesc">A single trunk cell waits at the ground. Grow upward and shape something worth keeping.</div>
+      </div>
+
+      <div class="rules">
+        Click only the glowing cells to grow. New growth must touch the existing tree.
+        When you are ready, finish the tree and it will be named from its silhouette.
+      </div>
+    </aside>
+
+    <main class="scene">
+      <div class="moon"></div>
+      <div class="grid-wrap">
+        <div class="grid" id="grid" aria-label="Tree grid"></div>
+      </div>
+      <div class="status-line" id="statusLine">Begin at the trunk and compose a silhouette.</div>
+    </main>
+  </div>
+
+  <script>
+    const COLS = 9;
+    const ROWS = 16;
+    const TOTAL_GROWTHS = 24;
+
+    const gridEl = document.getElementById('grid');
+    const movesLeftEl = document.getElementById('movesLeft');
+    const placedCountEl = document.getElementById('placedCount');
+    const moodTitleEl = document.getElementById('moodTitle');
+    const moodDescEl = document.getElementById('moodDesc');
+    const statusLineEl = document.getElementById('statusLine');
+    const resetBtn = document.getElementById('resetBtn');
+    const finishBtn = document.getElementById('finishBtn');
+
+    let cells = [];
+    let occupied = new Set();
+    let finished = false;
+    let growthsUsed = 0;
+
+    function key(r, c){ return `${r},${c}`; }
+    function inBounds(r, c){ return r >= 0 && r < ROWS && c >= 0 && c < COLS; }
+
+    function neighbors4(r, c){
+      return [
+        [r-1,c],
+        [r+1,c],
+        [r,c-1],
+        [r,c+1]
+      ].filter(([rr,cc]) => inBounds(rr,cc));
+    }
+
+    function neighbors8(r, c){
+      const list = [];
+      for(let dr=-1; dr<=1; dr++){
+        for(let dc=-1; dc<=1; dc++){
+          if(dr===0 && dc===0) continue;
+          const rr = r + dr;
+          const cc = c + dc;
+          if(inBounds(rr,cc)) list.push([rr,cc]);
+        }
+      }
+      return list;
+    }
+
+    function isOccupied(r,c){
+      return occupied.has(key(r,c));
+    }
+
+    function createGrid(){
+      gridEl.innerHTML = '';
+      cells = [];
+      for(let r=0; r<ROWS; r++){
+        const row = [];
+        for(let c=0; c<COLS; c++){
+          const btn = document.createElement('button');
+          btn.className = 'cell';
+          btn.type = 'button';
+          btn.dataset.r = r;
+          btn.dataset.c = c;
+          btn.addEventListener('click', () => handleCellClick(r,c));
+          gridEl.appendChild(btn);
+          row.push(btn);
+        }
+        cells.push(row);
+      }
+    }
+
+    function seedTree(){
+      occupied.clear();
+      finished = false;
+      growthsUsed = 0;
+
+      const startR = ROWS - 1;
+      const startC = Math.floor(COLS / 2);
+      occupied.add(key(startR, startC));
+      render();
+      setMood('Sapling', 'A single trunk cell waits at the ground. Grow upward and shape something worth keeping.');
+      statusLineEl.textContent = 'Begin at the trunk and compose a silhouette.';
+    }
+
+    function resetGame(){
+      createGrid();
+      seedTree();
+    }
+
+    function getValidPlacements(){
+      if(finished) return [];
+      if(growthsUsed >= TOTAL_GROWTHS) return [];
+
+      const valid = [];
+      for(let r=0; r<ROWS; r++){
+        for(let c=0; c<COLS; c++){
+          if(isOccupied(r,c)) continue;
+
+          const adj = neighbors4(r,c).some(([rr,cc]) => isOccupied(rr,cc));
+          if(!adj) continue;
+
+          // Keep it tree-like: don't allow growth below the ground row.
+          // Encourage upward composition by disallowing bottom-row side sprawl except next to trunk cluster.
+          if(r === ROWS - 1){
+            const above = isOccupied(r-1, c);
+            const side = (isOccupied(r, c-1) || isOccupied(r, c+1));
+            if(!above && !side) continue;
+          }
+
+          valid.push([r,c]);
+        }
+      }
+      return valid;
+    }
+
+    function handleCellClick(r,c){
+      if(finished) return;
+      const validKeys = new Set(getValidPlacements().map(([rr,cc]) => key(rr,cc)));
+      if(!validKeys.has(key(r,c))) return;
+
+      occupied.add(key(r,c));
+      growthsUsed++;
+      render();
+
+      if(growthsUsed >= TOTAL_GROWTHS || getValidPlacements().length === 0){
+        finishTree();
+      } else {
+        updateLiveReading();
+      }
+    }
+
+    function render(){
+      const validSet = new Set(getValidPlacements().map(([r,c]) => key(r,c)));
+
+      for(let r=0; r<ROWS; r++){
+        for(let c=0; c<COLS; c++){
+          const el = cells[r][c];
+          el.className = 'cell';
+          el.innerHTML = '';
+
+          if(isOccupied(r,c)){
+            el.classList.add('filled');
+
+            const wood = document.createElement('div');
+            wood.className = 'wood';
+            el.appendChild(wood);
+
+            if(isTip(r,c)) el.classList.add('tip');
+          } else if(validSet.has(key(r,c))){
+            el.classList.add('valid');
+          }
+        }
+      }
+
+      movesLeftEl.textContent = Math.max(0, TOTAL_GROWTHS - growthsUsed);
+      placedCountEl.textContent = occupied.size;
+    }
+
+    function isTip(r,c){
+      if(!isOccupied(r,c)) return false;
+      const neighbors = neighbors4(r,c).filter(([rr,cc]) => isOccupied(rr,cc));
+      return neighbors.length <= 1 || (neighbors.length === 2 && neighbors.some(([rr]) => rr < r));
+    }
+
+    function setMood(title, desc){
+      moodTitleEl.textContent = title;
+      moodDescEl.textContent = desc;
+    }
+
+    function getMetrics(){
+      const coords = [...occupied].map(k => k.split(',').map(Number));
+      const rows = coords.map(([r]) => r);
+      const cols = coords.map(([,c]) => c);
+      const top = Math.min(...rows);
+      const bottom = Math.max(...rows);
+      const left = Math.min(...cols);
+      const right = Math.max(...cols);
+      const height = bottom - top + 1;
+      const width = right - left + 1;
+      const center = (COLS - 1) / 2;
+
+      let leftCount = 0;
+      let rightCount = 0;
+      let centerCount = 0;
+      let topHalf = 0;
+      let lowerHalf = 0;
+      let branching = 0;
+
+      for(const [r,c] of coords){
+        if(c < center) leftCount++;
+        else if(c > center) rightCount++;
+        else centerCount++;
+
+        if(r < ROWS / 2) topHalf++;
+        else lowerHalf++;
+
+        const n = neighbors4(r,c).filter(([rr,cc]) => isOccupied(rr,cc)).length;
+        if(n >= 3) branching++;
+      }
+
+      const symmetry = 1 - Math.abs(leftCount - rightCount) / Math.max(1, leftCount + rightCount);
+      const slenderness = height / Math.max(1, width);
+      const topBias = topHalf / Math.max(1, coords.length);
+      const grounded = centerCount / Math.max(1, coords.length);
+
+      return {
+        height, width, top, bottom, left, right,
+        symmetry, slenderness, topBias, grounded, branching,
+        leftCount, rightCount, centerCount, total: coords.length
+      };
+    }
+
+    function readTree(metrics){
+      const { symmetry, slenderness, topBias, branching, width, height, leftCount, rightCount } = metrics;
+
+      const leaning = Math.abs(leftCount - rightCount) >= 4;
+      const widerThanTall = width >= height * 0.7;
+
+      if(slenderness >= 2.7 && symmetry >= 0.78){
+        return {
+          title: 'Cathedral Tree',
+          desc: 'Tall, centered, and deliberate. It rises like something planted for memory rather than shade.'
+        };
+      }
+
+      if(leaning && topBias > 0.35){
+        return {
+          title: 'Windswept Tree',
+          desc: 'Its weight drifts to one side, as if it learned its shape from years of weather.'
+        };
+      }
+
+      if(branching >= 5 && width >= 6){
+        return {
+          title: 'Ancient Tree',
+          desc: 'Broad and many-jointed, with the feeling of age settling into every split and reach.'
+        };
+      }
+
+      if(symmetry >= 0.86 && width >= 5){
+        return {
+          title: 'Balanced Tree',
+          desc: 'Even without being rigid, it holds a calm sense of proportion from branch to branch.'
+        };
+      }
+
+      if(widerThanTall){
+        return {
+          title: 'Open Tree',
+          desc: 'It spreads outward generously, valuing canopy and gesture over strict ascent.'
+        };
+      }
+
+      if(branching <= 2 && slenderness >= 2.1){
+        return {
+          title: 'Quiet Tree',
+          desc: 'Simple and restrained. A narrow form with very little wasted motion.'
+        };
+      }
+
+      return {
+        title: 'Evening Tree',
+        desc: 'Not easily pinned down. It feels discovered more than designed.'
+      };
+    }
+
+    function updateLiveReading(){
+      const m = getMetrics();
+      if(m.total <= 3){
+        setMood('Sapling', 'Still young. The trunk is beginning to suggest a direction.');
+        statusLineEl.textContent = 'Grow upward first, then decide how generous or restrained the canopy should be.';
+        return;
+      }
+
+      if(m.slenderness > 2.3 && m.width <= 3){
+        setMood('Rising', 'This shape is staying narrow and vertical so far. It feels disciplined.');
+        statusLineEl.textContent = 'A few side branches now would soften the silhouette.';
+        return;
+      }
+
+      if(m.width >= 5 && m.branching >= 3){
+        setMood('Branching', 'The canopy is beginning to open. Negative space will matter now.');
+        statusLineEl.textContent = 'Try not to fill every possibility. Let the tree breathe.';
+        return;
+      }
+
+      if(Math.abs(m.leftCount - m.rightCount) >= 4){
+        setMood('Leaning', 'Its weight is drifting to one side. That can become character if you commit to it.');
+        statusLineEl.textContent = 'You can balance it, or make the lean feel intentional.';
+        return;
+      }
+
+      setMood('Growing', 'The form is still undecided. The next few placements will define its personality.');
+      statusLineEl.textContent = 'Look at the silhouette, not just the available cells.';
+    }
+
+    function finishTree(){
+      if(finished) return;
+      finished = true;
+      render();
+
+      const metrics = getMetrics();
+      const reading = readTree(metrics);
+      setMood(reading.title, reading.desc);
+      statusLineEl.textContent = 'Finished. You made: ' + reading.title + '.';
+    }
+
+    resetBtn.addEventListener('click', resetGame);
+    finishBtn.addEventListener('click', finishTree);
+
+    resetGame();
+  </script>
+</body>
+</html>
