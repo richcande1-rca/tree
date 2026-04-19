@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>Tree v3.2</title>
+  <title>Tree v3.3</title>
   <style>
     :root{
       --panel:rgba(9,14,24,.80);
@@ -18,6 +18,7 @@
       --gap:1px;
       --panel-width:350px;
       --scene-min:640px;
+      --mobile-dock-h: 176px;
     }
 
     *{box-sizing:border-box}
@@ -121,10 +122,16 @@
     button:active{transform:translateY(1px)}
 
     .size-btn.active,
-    .mode-btn.active{
+    .mode-btn.active,
+    .lock-btn.active{
       border-color:rgba(176,231,176,.45);
       background:linear-gradient(180deg, rgba(134,187,126,.42), rgba(90,130,86,.26));
       box-shadow:0 0 0 1px rgba(176,231,176,.12), 0 10px 20px rgba(0,0,0,.18);
+    }
+
+    .lock-btn.locked{
+      border-color:rgba(255,210,110,.38);
+      background:linear-gradient(180deg, rgba(190,150,60,.36), rgba(130,100,35,.22));
     }
 
     .stat-grid{
@@ -295,6 +302,10 @@
       z-index:2;
     }
 
+    .mobile-dock{
+      display:none;
+    }
+
     @media (max-width: 1180px){
       :root{
         --cell-size:10px;
@@ -304,95 +315,140 @@
     }
 
     @media (max-width: 860px){
-      body{
-        overflow:auto;
-        min-height:100svh;
-      }
-      .app{
-        height:auto;
-        min-height:100svh;
-        grid-template-columns:1fr;
-        gap:14px;
-        padding:14px;
-      }
-      .panel{
-        overflow:visible;
-      }
-      .scene{
-        min-height:74svh;
-      }
-      .moon{
-        width:88px;
-        height:88px;
-        top:20px;
-        right:20px;
-      }
-      .status-line{
-        left:18px;
-        right:18px;
-        bottom:12px;
-        font-size:.95rem;
-      }
-    }
-
-    @media (max-width: 640px){
       :root{
         --cell-size:8px;
         --scene-min:620px;
       }
-      h1{
-        font-size:1.95rem;
+
+      body{
+        overflow:auto;
+        min-height:100svh;
       }
-      .subtitle,
-      .rules,
-      .read-desc{
-        font-size:.95rem;
+
+      .app{
+        height:auto;
+        min-height:100svh;
+        grid-template-columns:1fr;
+        gap:12px;
+        padding:12px;
       }
+
+      .panel{
+        display:none;
+      }
+
       .scene{
-        min-height:70svh;
+        min-height:72svh;
         border-radius:22px;
       }
+
+      .moon{
+        width:84px;
+        height:84px;
+        top:18px;
+        right:18px;
+      }
+
       .grid-wrap{
         align-items:flex-start;
         justify-content:center;
-        padding:14px 10px 42px 10px;
+        padding:14px 10px calc(var(--mobile-dock-h) + 18px) 10px;
       }
+
       .grid-frame{
         padding:10px 10px 18px 10px;
         max-width:100%;
       }
+
       .status-line{
-        font-size:.88rem;
+        left:16px;
+        right:16px;
+        bottom:calc(var(--mobile-dock-h) + 6px);
+        font-size:.9rem;
+      }
+
+      .mobile-dock{
+        display:block;
+        position:sticky;
+        bottom:0;
+        z-index:20;
+        margin-top:-6px;
+        padding-bottom:max(10px, env(safe-area-inset-bottom));
+      }
+
+      .dock-inner{
+        background:rgba(9,14,24,.94);
+        border:1px solid rgba(255,255,255,.12);
+        border-radius:18px;
+        box-shadow:var(--shadow);
+        backdrop-filter: blur(8px);
+        padding:10px;
+      }
+
+      .dock-top,
+      .dock-middle,
+      .dock-bottom{
+        display:grid;
+        gap:8px;
+        margin-bottom:8px;
+      }
+
+      .dock-top{
+        grid-template-columns:1fr 1fr;
+      }
+
+      .dock-middle{
+        grid-template-columns:repeat(5, 1fr);
+      }
+
+      .dock-bottom{
+        grid-template-columns:1fr 1fr;
+        margin-bottom:0;
+      }
+
+      .mobile-dock button{
+        padding:11px 8px;
+        font-size:.95rem;
+      }
+
+      .mobile-status{
+        color:var(--muted);
+        font-size:.84rem;
+        line-height:1.3;
+        margin-bottom:8px;
+        text-align:center;
+      }
+
+      .mobile-read{
+        color:#d8e0f0;
+        font-size:.9rem;
+        line-height:1.35;
+        text-align:center;
+        margin-bottom:8px;
       }
     }
 
     @media (max-width: 420px){
       :root{
         --cell-size:7px;
+        --mobile-dock-h: 188px;
       }
       .app{
-        padding:10px;
-        gap:10px;
-      }
-      .panel{
-        padding:16px 14px;
-      }
-      .tool-box, .read-box, .stat-box{
-        padding:14px 12px;
-        margin-bottom:10px;
-      }
-      button{
-        padding:10px 8px;
-        font-size:.94rem;
-      }
-      .size-row{
-        gap:6px;
-      }
-      .mode-row, .action-row, .stat-grid{
+        padding:8px;
         gap:8px;
       }
       .scene{
         min-height:68svh;
+      }
+      .mobile-dock button{
+        padding:10px 6px;
+        font-size:.9rem;
+      }
+      .mobile-status{
+        font-size:.8rem;
+      }
+      .mobile-read{
+        font-size:.86rem;
       }
     }
   </style>
@@ -407,7 +463,7 @@
 
       <div class="tool-box">
         <div class="box-title">Build Size</div>
-        <div class="size-row">
+        <div class="size-row desktop-size-row">
           <button class="size-btn" data-size="1">1</button>
           <button class="size-btn" data-size="2">2</button>
           <button class="size-btn" data-size="3">3</button>
@@ -416,12 +472,12 @@
         </div>
 
         <div class="box-title" style="margin-top:8px;">Mode</div>
-        <div class="mode-row">
+        <div class="mode-row desktop-mode-row">
           <button class="mode-btn active" data-mode="draw">Wood</button>
           <button class="mode-btn" data-mode="erase">Erase</button>
         </div>
 
-        <div class="action-row">
+        <div class="action-row desktop-action-row">
           <button id="clearBtn">Clear</button>
           <button id="seedBtn">Seed Trunk</button>
         </div>
@@ -448,7 +504,7 @@
       </div>
 
       <div class="rules">
-        Tap or drag to paint wood onto the fine grid. On phones, the layout switches to portrait mode and keeps the canvas visible below the controls.
+        Tap or drag to paint wood onto the fine grid. On phones, the controls move to a sticky dock below the tree.
       </div>
     </aside>
 
@@ -461,21 +517,50 @@
       </div>
       <div class="status-line" id="statusLine">Paint the trunk first. Let it taper as it rises.</div>
     </main>
+
+    <div class="mobile-dock">
+      <div class="dock-inner">
+        <div class="mobile-status" id="mobileStatus">Draw is ON. Tap or drag on the tree to paint.</div>
+        <div class="mobile-read" id="mobileRead">Lay in the trunk with 4 or 5, then taper into 3, 2, and 1 for limbs and twigs.</div>
+
+        <div class="dock-top">
+          <button class="lock-btn active" id="drawLockBtn">Draw On</button>
+          <button class="mobile-mode-btn active" data-mode="draw">Wood</button>
+        </div>
+
+        <div class="dock-middle">
+          <button class="mobile-size-btn" data-size="1">1</button>
+          <button class="mobile-size-btn" data-size="2">2</button>
+          <button class="mobile-size-btn" data-size="3">3</button>
+          <button class="mobile-size-btn active" data-size="4">4</button>
+          <button class="mobile-size-btn" data-size="5">5</button>
+        </div>
+
+        <div class="dock-bottom">
+          <button id="mobileSeedBtn">Seed</button>
+          <button id="mobileClearBtn">Clear</button>
+        </div>
+      </div>
+    </div>
   </div>
 
   <script>
     const COLS = 43;
     const ROWS = 63;
 
-    const sizeButtons = [...document.querySelectorAll('.size-btn')];
-    const modeButtons = [...document.querySelectorAll('.mode-btn')];
-    const clearBtn = document.getElementById('clearBtn');
-    const seedBtn = document.getElementById('seedBtn');
+    const sizeButtons = [...document.querySelectorAll('.size-btn, .mobile-size-btn')];
+    const modeButtons = [...document.querySelectorAll('.mode-btn, .mobile-mode-btn')];
+    const clearBtns = [...document.querySelectorAll('#clearBtn, #mobileClearBtn')];
+    const seedBtns = [...document.querySelectorAll('#seedBtn, #mobileSeedBtn')];
+    const drawLockBtn = document.getElementById('drawLockBtn');
+
     const gridEl = document.getElementById('grid');
     const filledCountEl = document.getElementById('filledCount');
     const brushValueEl = document.getElementById('brushValue');
     const readTitleEl = document.getElementById('readTitle');
     const readDescEl = document.getElementById('readDesc');
+    const mobileReadEl = document.getElementById('mobileRead');
+    const mobileStatusEl = document.getElementById('mobileStatus');
     const statusLineEl = document.getElementById('statusLine');
 
     let brushSize = 4;
@@ -484,6 +569,7 @@
     let filled = new Set();
     let isPointerDown = false;
     let lastPaintKey = null;
+    let drawEnabled = true;
 
     function key(r, c){ return `${r},${c}`; }
     function inBounds(r, c){ return r >= 0 && r < ROWS && c >= 0 && c < COLS; }
@@ -527,6 +613,7 @@
       if(lastPaintKey === `${mode}:${brushSize}:${k}`) return;
       lastPaintKey = `${mode}:${brushSize}:${k}`;
       const offsets = getBrushOffsets(brushSize);
+
       for(const [dr, dc] of offsets){
         const rr = r + dr;
         const cc = c + dc;
@@ -535,6 +622,7 @@
         if(mode === 'draw') filled.add(cellKey);
         else filled.delete(cellKey);
       }
+
       render();
       updateReading();
     }
@@ -548,9 +636,7 @@
     function setMode(nextMode){
       mode = nextMode;
       modeButtons.forEach(btn => btn.classList.toggle('active', btn.dataset.mode === mode));
-      statusLineEl.textContent = mode === 'draw'
-        ? 'Paint trunk mass first, then taper into lighter branches.'
-        : 'Erase to carve negative space and refine the silhouette.';
+      updateStatusLine();
     }
 
     function setBrushSize(size){
@@ -559,11 +645,21 @@
       sizeButtons.forEach(btn => btn.classList.toggle('active', Number(btn.dataset.size) === brushSize));
     }
 
+    function setDrawEnabled(enabled){
+      drawEnabled = enabled;
+      if (drawLockBtn){
+        drawLockBtn.classList.toggle('active', enabled);
+        drawLockBtn.classList.toggle('locked', !enabled);
+        drawLockBtn.textContent = enabled ? 'Draw On' : 'Draw Off';
+      }
+      updateStatusLine();
+    }
+
     function clearTree(){
       filled.clear();
       render();
       updateReading();
-      statusLineEl.textContent = 'Canvas cleared. Start again from the base and build upward.';
+      updateStatusLine('Canvas cleared.');
     }
 
     function seedTrunk(){
@@ -580,7 +676,7 @@
       }
       render();
       updateReading();
-      statusLineEl.textContent = 'Seed planted. Now widen or taper the trunk as you like.';
+      updateStatusLine('Seed planted.');
     }
 
     function neighborCount(r, c){
@@ -639,6 +735,7 @@
 
     function getMetrics(){
       if(filled.size === 0) return null;
+
       const coords = [...filled].map(k => k.split(',').map(Number));
       const rows = coords.map(([r]) => r);
       const cols = coords.map(([,c]) => c);
@@ -659,9 +756,11 @@
       for(const [r,c] of coords){
         if(c < center) leftCount++;
         else if(c > center) rightCount++;
+
         const d1 = inBounds(r-1, c-1) && isFilled(r-1, c-1);
         const d2 = inBounds(r-1, c+1) && isFilled(r-1, c+1);
         if(d1 || d2) diagonal++;
+
         const n = neighborCount(r,c);
         if(n >= 5) dense++;
         if(isTip(r,c)) tips++;
@@ -681,41 +780,55 @@
 
     function updateReading(){
       const m = getMetrics();
+      let readText = '';
+
       if(!m){
         readTitleEl.textContent = 'Blank Canvas';
-        readDescEl.textContent = 'Lay in the trunk with 4 or 5, then taper into 3, 2, and 1 for limbs and twigs.';
-        return;
-      }
-      if(m.total < 30){
+        readText = 'Lay in the trunk with 4 or 5, then taper into 3, 2, and 1 for limbs and twigs.';
+      } else if(m.total < 30){
         readTitleEl.textContent = 'Beginning';
-        readDescEl.textContent = 'The trunk is only just arriving. Establish the lower mass before chasing fine detail.';
-        return;
-      }
-      if(m.slenderness >= 2.8 && m.width <= 8){
+        readText = 'The trunk is only just arriving. Establish the lower mass before chasing fine detail.';
+      } else if(m.slenderness >= 2.8 && m.width <= 8){
         readTitleEl.textContent = 'Rising Tree';
-        readDescEl.textContent = 'Very vertical so far. A few branching gestures could keep it from feeling too rigid.';
-        return;
-      }
-      if(m.diagonalRatio >= 0.34 && m.tipRatio >= 0.11){
+        readText = 'Very vertical so far. A few branching gestures could keep it from feeling too rigid.';
+      } else if(m.diagonalRatio >= 0.34 && m.tipRatio >= 0.11){
         readTitleEl.textContent = 'Natural Branching';
-        readDescEl.textContent = 'The silhouette is starting to break into believable limbs and lighter tips. Keep the tapering gentle.';
-        return;
-      }
-      if(m.densityRatio >= 0.45){
+        readText = 'The silhouette is starting to break into believable limbs and lighter tips. Keep the tapering gentle.';
+      } else if(m.densityRatio >= 0.45){
         readTitleEl.textContent = 'Heavy Core';
-        readDescEl.textContent = 'There is strong trunk mass here, but it may want more carved negative space higher up.';
-        return;
-      }
-      if(m.symmetry >= 0.88 && m.width >= 10){
+        readText = 'There is strong trunk mass here, but it may want more carved negative space higher up.';
+      } else if(m.symmetry >= 0.88 && m.width >= 10){
         readTitleEl.textContent = 'Balanced Tree';
-        readDescEl.textContent = 'The weight feels even without going flat. This could become a convincing yard tree.';
-        return;
+        readText = 'The weight feels even without going flat. This could become a convincing yard tree.';
+      } else {
+        readTitleEl.textContent = 'Developing Silhouette';
+        readText = 'The structure is still deciding itself. Use erase to carve air, and smaller sizes to taper the branch ends.';
       }
-      readTitleEl.textContent = 'Developing Silhouette';
-      readDescEl.textContent = 'The structure is still deciding itself. Use erase to carve air, and smaller sizes to taper the branch ends.';
+
+      readDescEl.textContent = readText;
+      if (mobileReadEl) mobileReadEl.textContent = readText;
+    }
+
+    function updateStatusLine(prefix=''){
+      let text = '';
+      if (prefix) {
+        text = prefix + ' ';
+      }
+      if (window.matchMedia('(max-width: 860px)').matches) {
+        text += drawEnabled
+          ? `Draw is ON · ${mode === 'draw' ? 'Wood' : 'Erase'} · size ${brushSize}`
+          : `Draw is OFF · safe to scroll`;
+        if (mobileStatusEl) {
+          mobileStatusEl.textContent = text;
+        }
+      }
+      statusLineEl.textContent = text || (mode === 'draw'
+        ? 'Paint the trunk first. Let it taper as it rises.'
+        : 'Erase to carve negative space and refine the silhouette.');
     }
 
     function beginPointer(clientX, clientY){
+      if (!drawEnabled) return;
       isPointerDown = true;
       lastPaintKey = null;
       const cell = getCellFromPoint(clientX, clientY);
@@ -723,7 +836,7 @@
     }
 
     function movePointer(clientX, clientY){
-      if(!isPointerDown) return;
+      if(!isPointerDown || !drawEnabled) return;
       const cell = getCellFromPoint(clientX, clientY);
       if(cell) paintAt(cell[0], cell[1]);
     }
@@ -734,11 +847,13 @@
     }
 
     gridEl.addEventListener('pointerdown', (e) => {
+      if (!drawEnabled) return;
       e.preventDefault();
       beginPointer(e.clientX, e.clientY);
     });
 
     window.addEventListener('pointermove', (e) => {
+      if (!drawEnabled) return;
       movePointer(e.clientX, e.clientY);
     }, { passive: false });
 
@@ -753,12 +868,19 @@
       btn.addEventListener('click', () => setMode(btn.dataset.mode));
     });
 
-    clearBtn.addEventListener('click', clearTree);
-    seedBtn.addEventListener('click', seedTrunk);
+    clearBtns.forEach(btn => btn.addEventListener('click', clearTree));
+    seedBtns.forEach(btn => btn.addEventListener('click', seedTrunk));
+
+    if (drawLockBtn) {
+      drawLockBtn.addEventListener('click', () => setDrawEnabled(!drawEnabled));
+    }
+
+    window.addEventListener('resize', () => updateStatusLine());
 
     createGrid();
     render();
     updateReading();
+    updateStatusLine();
   </script>
 </body>
 </html>
