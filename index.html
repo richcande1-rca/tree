@@ -3,43 +3,44 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Tree v2</title>
+  <title>Tree v3</title>
   <style>
     :root{
       --bg1:#0b1020;
       --bg2:#111a31;
-      --panel:rgba(9,14,24,.78);
+      --panel:rgba(9,14,24,.80);
       --panel-border:rgba(255,255,255,.12);
       --text:#e8eefc;
       --muted:#aab6d1;
-      --wood:#5b4234;
-      --wood2:#7a5b48;
+      --wood-dark:#50382d;
+      --wood-mid:#6a4b3a;
+      --wood-light:#8a6852;
       --leaf:#7fbf7f;
-      --leaf2:#a2e1a2;
-      --grid:rgba(255,255,255,.045);
-      --valid:rgba(159,205,158,.18);
-      --valid-hover:rgba(171,221,170,.26);
+      --leaf-light:#a9e2a9;
+      --grid:rgba(255,255,255,.04);
+      --active:rgba(170,222,168,.18);
       --shadow:0 16px 40px rgba(0,0,0,.35);
-      --cell-size:22px;
-      --gap:2px;
+      --cell-size:11px;
+      --gap:1px;
     }
 
     *{box-sizing:border-box}
-    html,body{height:100%}
+    html, body{height:100%}
     body{
       margin:0;
-      font-family: Georgia, "Times New Roman", serif;
       color:var(--text);
+      font-family: Georgia, "Times New Roman", serif;
       background:
         radial-gradient(circle at 50% 18%, rgba(215,237,255,.16), transparent 28%),
         linear-gradient(180deg, #1c2747 0%, #0f1830 38%, #09101f 70%, #070b14 100%);
       overflow:hidden;
+      touch-action:none;
     }
 
     .app{
       height:100%;
       display:grid;
-      grid-template-columns: 380px 1fr;
+      grid-template-columns: 350px 1fr;
       gap:24px;
       padding:24px;
       align-items:stretch;
@@ -71,64 +72,40 @@
       font-size:1rem;
     }
 
-    .stat-block{
-      display:grid;
-      grid-template-columns:1fr 1fr;
-      gap:12px;
-      margin-bottom:16px;
-    }
-
-    .stat{
-      border:1px solid rgba(255,255,255,.1);
-      border-radius:16px;
-      padding:14px 12px;
-      background:rgba(255,255,255,.035);
-    }
-
-    .stat-label{
-      color:var(--muted);
-      font-size:.92rem;
-      margin-bottom:6px;
-    }
-
-    .stat-value{
-      font-size:1.55rem;
-    }
-
-    .size-box, .mood-box{
+    .tool-box, .read-box, .stat-box{
       border:1px solid rgba(255,255,255,.1);
       border-radius:18px;
       padding:16px 14px;
       background:rgba(255,255,255,.035);
-      margin-bottom:16px;
+      margin-bottom:14px;
     }
 
-    .size-title, .mood-label{
+    .box-title{
       color:var(--muted);
       font-size:.95rem;
       margin-bottom:10px;
     }
 
-    .size-buttons{
+    .size-row{
       display:grid;
-      grid-template-columns:1fr 1fr 1fr;
-      gap:10px;
-      margin-bottom:8px;
+      grid-template-columns: repeat(5, 1fr);
+      gap:8px;
+      margin-bottom:10px;
     }
 
-    .buttons{
+    .mode-row, .action-row{
       display:grid;
       grid-template-columns:1fr 1fr;
       gap:10px;
-      margin-bottom:16px;
+      margin-top:10px;
     }
 
     button{
       appearance:none;
       border:none;
       cursor:pointer;
-      border-radius:16px;
-      padding:12px 14px;
+      border-radius:14px;
+      padding:11px 12px;
       font:inherit;
       font-size:1rem;
       color:var(--text);
@@ -145,37 +122,46 @@
     }
 
     button:active{transform:translateY(1px)}
-    button.primary{
-      background:linear-gradient(180deg, rgba(134,187,126,.38), rgba(90,130,86,.22));
-    }
 
-    .size-btn{
-      padding:11px 8px;
-      font-size:.95rem;
-    }
-
-    .size-btn.active{
+    .size-btn.active,
+    .mode-btn.active{
       border-color:rgba(176,231,176,.45);
       background:linear-gradient(180deg, rgba(134,187,126,.42), rgba(90,130,86,.26));
       box-shadow:0 0 0 1px rgba(176,231,176,.12), 0 10px 20px rgba(0,0,0,.18);
     }
 
-    .size-help{
-      color:var(--muted);
-      line-height:1.42;
-      font-size:.92rem;
+    .stat-grid{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:10px;
     }
 
-    .mood-title{
-      font-size:1.5rem;
+    .stat{
+      border:1px solid rgba(255,255,255,.08);
+      border-radius:14px;
+      padding:12px 10px;
+      background:rgba(255,255,255,.025);
+    }
+
+    .stat-label{
+      color:var(--muted);
+      font-size:.9rem;
       margin-bottom:6px;
     }
 
-    .mood-desc{
+    .stat-value{
+      font-size:1.35rem;
+    }
+
+    .read-title{
+      font-size:1.45rem;
+      margin-bottom:6px;
+    }
+
+    .read-desc{
       color:#d8e0f0;
       line-height:1.45;
-      font-size:.98rem;
-      min-height:56px;
+      min-height:64px;
     }
 
     .rules{
@@ -233,7 +219,7 @@
     }
 
     .grid-frame{
-      padding:16px 18px 26px 18px;
+      padding:14px 16px 24px 16px;
       border-radius:20px;
       background:linear-gradient(180deg, rgba(255,255,255,.035), rgba(255,255,255,.02));
       box-shadow: inset 0 0 0 1px rgba(255,255,255,.05);
@@ -250,70 +236,51 @@
     }
 
     .grid{
-      position:relative;
       display:grid;
       gap:var(--gap);
+      touch-action:none;
+      user-select:none;
+      -webkit-user-select:none;
     }
 
     .cell{
       width:var(--cell-size);
       height:var(--cell-size);
-      border:none;
-      border-radius:8px;
+      border-radius:3px;
       background:var(--grid);
       position:relative;
-      padding:0;
-      box-shadow: inset 0 0 0 1px rgba(255,255,255,.025);
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,.02);
     }
 
-    .cell.valid{
-      background:var(--valid);
-      box-shadow:
-        inset 0 0 0 1px rgba(184,235,181,.18),
-        0 0 12px rgba(118,180,111,.07);
-    }
-
-    .cell.valid:hover{
-      background:var(--valid-hover);
-      transform:translateY(-1px);
+    .cell.preview{
+      background:var(--active);
     }
 
     .cell.filled{
       background:transparent;
       box-shadow:none;
-      cursor:default;
     }
 
     .wood{
       position:absolute;
-      inset:5px;
+      inset:1px;
       border-radius:999px;
-      background:linear-gradient(180deg, var(--wood2), var(--wood));
       box-shadow:
         inset 0 1px 0 rgba(255,255,255,.10),
-        0 3px 8px rgba(0,0,0,.22);
+        0 2px 6px rgba(0,0,0,.20);
     }
 
-    .wood::after{
+    .tip::after{
       content:"";
       position:absolute;
-      inset:4px 5px;
-      border-radius:999px;
-      background:linear-gradient(180deg, rgba(255,255,255,.12), rgba(255,255,255,0));
-      opacity:.28;
-    }
-
-    .tip .wood::before{
-      content:"";
-      position:absolute;
-      width:8px;
-      height:8px;
-      top:-3px;
+      width:5px;
+      height:5px;
+      top:-1px;
       left:50%;
       transform:translateX(-50%) rotate(45deg);
-      border-radius:2px;
-      background:linear-gradient(180deg, var(--leaf2), var(--leaf));
-      box-shadow:0 0 8px rgba(113,181,111,.28);
+      border-radius:1px;
+      background:linear-gradient(180deg, var(--leaf-light), var(--leaf));
+      box-shadow:0 0 6px rgba(113,181,111,.28);
     }
 
     .status-line{
@@ -330,8 +297,20 @@
     }
 
     @media (max-width: 1180px){
-      :root{ --cell-size:20px; }
-      .app{ grid-template-columns: 350px 1fr; gap:18px; padding:18px; }
+      :root{ --cell-size:10px; }
+      .app{ grid-template-columns:320px 1fr; gap:18px; padding:18px; }
+    }
+
+    @media (max-width: 860px){
+      body{overflow:auto}
+      .app{
+        height:auto;
+        min-height:100%;
+        grid-template-columns:1fr;
+      }
+      .scene{
+        min-height:72vh;
+      }
     }
   </style>
 </head>
@@ -340,46 +319,54 @@
     <aside class="panel">
       <h1>Tree</h1>
       <p class="subtitle">
-        Finer grid, diagonal growth, and a size selector. Build for silhouette first and let the shape decide the mood.
+        One fine master grid. Sizes 1–5 work like branch brushes: trunk mass first, then thinner limbs and twigs.
       </p>
 
-      <div class="stat-block">
-        <div class="stat">
-          <div class="stat-label">Growths Left</div>
-          <div class="stat-value" id="movesLeft">48</div>
+      <div class="tool-box">
+        <div class="box-title">Build Size</div>
+        <div class="size-row" id="sizeRow">
+          <button class="size-btn" data-size="1">1</button>
+          <button class="size-btn" data-size="2">2</button>
+          <button class="size-btn" data-size="3">3</button>
+          <button class="size-btn active" data-size="4">4</button>
+          <button class="size-btn" data-size="5">5</button>
         </div>
-        <div class="stat">
-          <div class="stat-label">Branches Placed</div>
-          <div class="stat-value" id="placedCount">1</div>
+
+        <div class="box-title" style="margin-top:8px;">Mode</div>
+        <div class="mode-row">
+          <button class="mode-btn active" data-mode="draw">Wood</button>
+          <button class="mode-btn" data-mode="erase">Erase</button>
+        </div>
+
+        <div class="action-row">
+          <button id="clearBtn">Clear</button>
+          <button id="seedBtn">Seed Trunk</button>
         </div>
       </div>
 
-      <div class="size-box">
-        <div class="size-title">Tree Size</div>
-        <div class="size-buttons">
-          <button class="size-btn active" data-size="small">Small</button>
-          <button class="size-btn" data-size="medium">Medium</button>
-          <button class="size-btn" data-size="large">Large</button>
-        </div>
-        <div class="size-help" id="sizeHelp">
-          Small gives you a restrained silhouette and fewer growths. Medium and Large open more space for thinner branching.
+      <div class="stat-box">
+        <div class="box-title">Shape Notes</div>
+        <div class="stat-grid">
+          <div class="stat">
+            <div class="stat-label">Filled Cells</div>
+            <div class="stat-value" id="filledCount">0</div>
+          </div>
+          <div class="stat">
+            <div class="stat-label">Brush Size</div>
+            <div class="stat-value" id="brushValue">4</div>
+          </div>
         </div>
       </div>
 
-      <div class="buttons">
-        <button class="primary" id="finishBtn">Finish Tree</button>
-        <button id="resetBtn">New Tree</button>
-      </div>
-
-      <div class="mood-box">
-        <div class="mood-label">Current Reading</div>
-        <div class="mood-title" id="moodTitle">Sapling</div>
-        <div class="mood-desc" id="moodDesc">A single trunk point waits at the ground. Grow upward and shape something worth keeping.</div>
+      <div class="read-box">
+        <div class="box-title">Current Reading</div>
+        <div class="read-title" id="readTitle">Blank Canvas</div>
+        <div class="read-desc" id="readDesc">Lay in the trunk with 4 or 5, then taper into 3, 2, and 1 for limbs and twigs.</div>
       </div>
 
       <div class="rules">
-        Click the glowing cells to grow. Diagonals are allowed, so branches can angle naturally.
-        Size changes the board and the total growth budget.
+        Tap or drag to paint wood onto the fine grid. Size 5 is best for trunk mass, while 1 and 2 work for delicate branch detail.
+        Erase is here for shaping, so this can stay fully under your control on desktop, Chromebook, or phone.
       </div>
     </aside>
 
@@ -387,196 +374,208 @@
       <div class="moon"></div>
       <div class="grid-wrap">
         <div class="grid-frame">
-          <div class="grid" id="grid" aria-label="Tree grid"></div>
+          <div class="grid" id="grid" aria-label="Tree builder canvas"></div>
         </div>
       </div>
-      <div class="status-line" id="statusLine">Start with the trunk and sketch a silhouette in the air.</div>
+      <div class="status-line" id="statusLine">Paint the trunk first. Let it taper as it rises.</div>
     </main>
   </div>
 
   <script>
-    const SIZE_CONFIGS = {
-      small:  { cols: 17, rows: 24, growths: 48, help: 'Small gives you a restrained silhouette and fewer growths. Medium and Large open more space for thinner branching.' },
-      medium: { cols: 21, rows: 28, growths: 72, help: 'Medium is probably the sweet spot: more height, more spread, and enough budget for real branch structure.' },
-      large:  { cols: 25, rows: 32, growths: 104, help: 'Large is airy and ambitious. It gives you room for delicate, higher canopies and long diagonal limbs.' }
-    };
+    const COLS = 43;
+    const ROWS = 63;
 
-    const gridEl = document.getElementById('grid');
-    const movesLeftEl = document.getElementById('movesLeft');
-    const placedCountEl = document.getElementById('placedCount');
-    const moodTitleEl = document.getElementById('moodTitle');
-    const moodDescEl = document.getElementById('moodDesc');
-    const statusLineEl = document.getElementById('statusLine');
-    const resetBtn = document.getElementById('resetBtn');
-    const finishBtn = document.getElementById('finishBtn');
-    const sizeHelpEl = document.getElementById('sizeHelp');
     const sizeButtons = [...document.querySelectorAll('.size-btn')];
+    const modeButtons = [...document.querySelectorAll('.mode-btn')];
+    const clearBtn = document.getElementById('clearBtn');
+    const seedBtn = document.getElementById('seedBtn');
+    const gridEl = document.getElementById('grid');
+    const filledCountEl = document.getElementById('filledCount');
+    const brushValueEl = document.getElementById('brushValue');
+    const readTitleEl = document.getElementById('readTitle');
+    const readDescEl = document.getElementById('readDesc');
+    const statusLineEl = document.getElementById('statusLine');
 
-    let currentSize = 'small';
-    let COLS = SIZE_CONFIGS[currentSize].cols;
-    let ROWS = SIZE_CONFIGS[currentSize].rows;
-    let TOTAL_GROWTHS = SIZE_CONFIGS[currentSize].growths;
-
+    let brushSize = 4;
+    let mode = 'draw';
     let cells = [];
-    let occupied = new Set();
-    let finished = false;
-    let growthsUsed = 0;
+    let filled = new Set();
+    let isPointerDown = false;
+    let lastPaintKey = null;
 
     function key(r, c){ return `${r},${c}`; }
     function inBounds(r, c){ return r >= 0 && r < ROWS && c >= 0 && c < COLS; }
-    function isOccupied(r,c){ return occupied.has(key(r,c)); }
-
-    function neighbors8(r, c){
-      const list = [];
-      for(let dr=-1; dr<=1; dr++){
-        for(let dc=-1; dc<=1; dc++){
-          if(dr===0 && dc===0) continue;
-          const rr = r + dr;
-          const cc = c + dc;
-          if(inBounds(rr,cc)) list.push([rr,cc]);
-        }
-      }
-      return list;
-    }
+    function isFilled(r, c){ return filled.has(key(r,c)); }
 
     function createGrid(){
-      gridEl.innerHTML = '';
       gridEl.style.gridTemplateColumns = `repeat(${COLS}, var(--cell-size))`;
       gridEl.style.gridTemplateRows = `repeat(${ROWS}, var(--cell-size))`;
-
+      gridEl.innerHTML = '';
       cells = [];
-      for(let r=0; r<ROWS; r++){
+
+      for(let r = 0; r < ROWS; r++){
         const row = [];
-        for(let c=0; c<COLS; c++){
-          const btn = document.createElement('button');
-          btn.className = 'cell';
-          btn.type = 'button';
-          btn.dataset.r = r;
-          btn.dataset.c = c;
-          btn.addEventListener('click', () => handleCellClick(r,c));
-          gridEl.appendChild(btn);
-          row.push(btn);
+        for(let c = 0; c < COLS; c++){
+          const cell = document.createElement('div');
+          cell.className = 'cell';
+          cell.dataset.r = r;
+          cell.dataset.c = c;
+          gridEl.appendChild(cell);
+          row.push(cell);
         }
         cells.push(row);
       }
     }
 
-    function setMood(title, desc){
-      moodTitleEl.textContent = title;
-      moodDescEl.textContent = desc;
-    }
+    function getBrushOffsets(size){
+      const radiusMap = {
+        1: 0,
+        2: 1,
+        3: 1.55,
+        4: 2.15,
+        5: 2.85
+      };
+      const radius = radiusMap[size];
+      const offsets = [];
 
-    function seedTree(){
-      occupied.clear();
-      finished = false;
-      growthsUsed = 0;
-
-      const startR = ROWS - 1;
-      const startC = Math.floor(COLS / 2);
-      occupied.add(key(startR, startC));
-
-      render();
-      setMood('Sapling', 'A single trunk point waits at the ground. Grow upward and shape something worth keeping.');
-      statusLineEl.textContent = 'Start with the trunk and sketch a silhouette in the air.';
-    }
-
-    function resetGame(){
-      COLS = SIZE_CONFIGS[currentSize].cols;
-      ROWS = SIZE_CONFIGS[currentSize].rows;
-      TOTAL_GROWTHS = SIZE_CONFIGS[currentSize].growths;
-      movesLeftEl.textContent = TOTAL_GROWTHS;
-      sizeHelpEl.textContent = SIZE_CONFIGS[currentSize].help;
-      createGrid();
-      seedTree();
-    }
-
-    function getValidPlacements(){
-      if(finished || growthsUsed >= TOTAL_GROWTHS) return [];
-      const valid = [];
-
-      for(let r=0; r<ROWS; r++){
-        for(let c=0; c<COLS; c++){
-          if(isOccupied(r,c)) continue;
-
-          const occupiedNeighbors = neighbors8(r,c).filter(([rr,cc]) => isOccupied(rr,cc));
-          if(occupiedNeighbors.length === 0) continue;
-
-          // Keep upward intent: don't allow new cells below occupied cells.
-          const hasSupportishNeighbor = occupiedNeighbors.some(([rr]) => rr >= r);
-          if(!hasSupportishNeighbor) continue;
-
-          // Let bottom row stay mostly trunk-like instead of sprawling flat.
-          if(r === ROWS - 1){
-            const nearCenter = Math.abs(c - Math.floor(COLS / 2)) <= 1;
-            const aboveOccupied = isOccupied(r - 1, c);
-            if(!nearCenter && !aboveOccupied) continue;
+      for(let dr = -3; dr <= 3; dr++){
+        for(let dc = -3; dc <= 3; dc++){
+          const dist = Math.sqrt((dr * dr) + (dc * dc));
+          if(dist <= radius){
+            offsets.push([dr, dc]);
           }
-
-          // Prevent overly dense blobs by avoiding fill-ins surrounded on too many sides.
-          const density = occupiedNeighbors.length;
-          if(density >= 5) continue;
-
-          valid.push([r,c]);
         }
       }
-
-      return valid;
+      return offsets;
     }
 
-    function handleCellClick(r,c){
-      if(finished) return;
-      const validKeys = new Set(getValidPlacements().map(([rr,cc]) => key(rr,cc)));
-      if(!validKeys.has(key(r,c))) return;
+    function paintAt(r, c){
+      const k = key(r,c);
+      if(lastPaintKey === `${mode}:${brushSize}:${k}`) return;
+      lastPaintKey = `${mode}:${brushSize}:${k}`;
 
-      occupied.add(key(r,c));
-      growthsUsed++;
-      render();
-
-      if(growthsUsed >= TOTAL_GROWTHS || getValidPlacements().length === 0){
-        finishTree();
-      } else {
-        updateLiveReading();
+      const offsets = getBrushOffsets(brushSize);
+      for(const [dr, dc] of offsets){
+        const rr = r + dr;
+        const cc = c + dc;
+        if(!inBounds(rr, cc)) continue;
+        const cellKey = key(rr, cc);
+        if(mode === 'draw') filled.add(cellKey);
+        else filled.delete(cellKey);
       }
+      render();
+      updateReading();
     }
 
-    function occupiedNeighborCount(r,c){
-      return neighbors8(r,c).filter(([rr,cc]) => isOccupied(rr,cc)).length;
+    function getCellFromPoint(clientX, clientY){
+      const el = document.elementFromPoint(clientX, clientY);
+      if(!el || !el.classList.contains('cell')) return null;
+      return [Number(el.dataset.r), Number(el.dataset.c)];
     }
 
-    function isTip(r,c){
-      if(!isOccupied(r,c)) return false;
-      const occ = neighbors8(r,c).filter(([rr,cc]) => isOccupied(rr,cc));
-      const above = occ.filter(([rr]) => rr < r).length;
-      return occ.length <= 2 || above === 0;
+    function setMode(nextMode){
+      mode = nextMode;
+      modeButtons.forEach(btn => btn.classList.toggle('active', btn.dataset.mode === mode));
+      statusLineEl.textContent = mode === 'draw'
+        ? 'Paint trunk mass first, then taper into lighter branches.'
+        : 'Erase to carve negative space and refine the silhouette.';
+    }
+
+    function setBrushSize(size){
+      brushSize = size;
+      brushValueEl.textContent = String(size);
+      sizeButtons.forEach(btn => btn.classList.toggle('active', Number(btn.dataset.size) === brushSize));
+    }
+
+    function clearTree(){
+      filled.clear();
+      render();
+      updateReading();
+      statusLineEl.textContent = 'Canvas cleared. Start again from the base and build upward.';
+    }
+
+    function seedTrunk(){
+      const center = Math.floor(COLS / 2);
+      const baseRows = [ROWS - 1, ROWS - 2, ROWS - 3, ROWS - 4];
+      const baseCols = [center - 1, center, center + 1];
+
+      for(const r of baseRows){
+        for(const c of baseCols){
+          if(inBounds(r,c)) filled.add(key(r,c));
+        }
+      }
+      for(let r = ROWS - 5; r >= ROWS - 8; r--){
+        if(inBounds(r, center)) filled.add(key(r, center));
+      }
+
+      render();
+      updateReading();
+      statusLineEl.textContent = 'Seed planted. Now widen or taper the trunk as you like.';
+    }
+
+    function neighborCount(r, c){
+      let count = 0;
+      for(let dr=-1; dr<=1; dr++){
+        for(let dc=-1; dc<=1; dc++){
+          if(dr===0 && dc===0) continue;
+          const rr = r + dr;
+          const cc = c + dc;
+          if(inBounds(rr,cc) && isFilled(rr,cc)) count++;
+        }
+      }
+      return count;
+    }
+
+    function isTip(r, c){
+      if(!isFilled(r,c)) return false;
+      const n = neighborCount(r,c);
+      let above = 0;
+      for(let dr=-1; dr<=0; dr++){
+        for(let dc=-1; dc<=1; dc++){
+          if(dr===0 && dc===0) continue;
+          const rr = r + dr;
+          const cc = c + dc;
+          if(inBounds(rr,cc) && isFilled(rr,cc)) above++;
+        }
+      }
+      return n <= 2 || above === 0;
+    }
+
+    function woodColor(r, c){
+      const n = neighborCount(r,c);
+      if(n >= 6) return 'linear-gradient(180deg, #8f6d57, #654838)';
+      if(n >= 3) return 'linear-gradient(180deg, #7f604c, #5a4032)';
+      return 'linear-gradient(180deg, #6f5545, #4b352a)';
     }
 
     function render(){
-      const validSet = new Set(getValidPlacements().map(([r,c]) => key(r,c)));
+      for(let r = 0; r < ROWS; r++){
+        for(let c = 0; c < COLS; c++){
+          const cell = cells[r][c];
+          cell.className = 'cell';
+          cell.innerHTML = '';
 
-      for(let r=0; r<ROWS; r++){
-        for(let c=0; c<COLS; c++){
-          const el = cells[r][c];
-          el.className = 'cell';
-          el.innerHTML = '';
+          if(isFilled(r,c)){
+            cell.classList.add('filled');
 
-          if(isOccupied(r,c)){
-            el.classList.add('filled');
             const wood = document.createElement('div');
             wood.className = 'wood';
-            el.appendChild(wood);
-            if(isTip(r,c)) el.classList.add('tip');
-          } else if(validSet.has(key(r,c))){
-            el.classList.add('valid');
+            wood.style.background = woodColor(r,c);
+            cell.appendChild(wood);
+
+            if(isTip(r,c) && r < ROWS - 2){
+              cell.classList.add('tip');
+            }
           }
         }
       }
-
-      movesLeftEl.textContent = Math.max(0, TOTAL_GROWTHS - growthsUsed);
-      placedCountEl.textContent = occupied.size;
+      filledCountEl.textContent = String(filled.size);
     }
 
     function getMetrics(){
-      const coords = [...occupied].map(k => k.split(',').map(Number));
+      if(filled.size === 0) return null;
+
+      const coords = [...filled].map(k => k.split(',').map(Number));
       const rows = coords.map(([r]) => r);
       const cols = coords.map(([,c]) => c);
       const top = Math.min(...rows);
@@ -587,148 +586,124 @@
       const width = right - left + 1;
       const center = (COLS - 1) / 2;
 
-      let leftCount = 0, rightCount = 0, centerCount = 0, topHalf = 0, branching = 0, diagonalFeeling = 0;
+      let leftCount = 0;
+      let rightCount = 0;
+      let diagonal = 0;
+      let dense = 0;
+      let tips = 0;
 
       for(const [r,c] of coords){
         if(c < center) leftCount++;
         else if(c > center) rightCount++;
-        else centerCount++;
 
-        if(r < ROWS / 2) topHalf++;
+        const d1 = inBounds(r-1, c-1) && isFilled(r-1, c-1);
+        const d2 = inBounds(r-1, c+1) && isFilled(r-1, c+1);
+        if(d1 || d2) diagonal++;
 
-        const n = occupiedNeighborCount(r,c);
-        if(n >= 3) branching++;
-
-        const diag = [[r-1,c-1],[r-1,c+1],[r+1,c-1],[r+1,c+1]].filter(([rr,cc]) => inBounds(rr,cc) && isOccupied(rr,cc)).length;
-        if(diag > 0) diagonalFeeling++;
+        const n = neighborCount(r,c);
+        if(n >= 5) dense++;
+        if(isTip(r,c)) tips++;
       }
 
       return {
+        total: coords.length,
         height,
         width,
         symmetry: 1 - Math.abs(leftCount - rightCount) / Math.max(1, leftCount + rightCount),
         slenderness: height / Math.max(1, width),
-        topBias: topHalf / Math.max(1, coords.length),
-        branching,
-        diagonalFeeling,
-        leftCount,
-        rightCount,
-        centerCount,
-        total: coords.length
+        diagonalRatio: diagonal / Math.max(1, coords.length),
+        densityRatio: dense / Math.max(1, coords.length),
+        tipRatio: tips / Math.max(1, coords.length)
       };
     }
 
-    function readTree(m){
-      const leaning = Math.abs(m.leftCount - m.rightCount) >= Math.max(5, Math.floor(m.total * 0.12));
-
-      if(m.slenderness >= 2.2 && m.symmetry >= 0.8 && m.branching >= 7){
-        return {
-          title: 'Cathedral Tree',
-          desc: 'Tall and deliberate, with a lifted canopy that feels built for stillness and light.'
-        };
-      }
-
-      if(leaning && m.diagonalFeeling >= Math.floor(m.total * 0.28)){
-        return {
-          title: 'Windswept Tree',
-          desc: 'The branches lean with purpose, as though years of weather taught them a preferred direction.'
-        };
-      }
-
-      if(m.branching >= 14 && m.width >= 10){
-        return {
-          title: 'Ancient Tree',
-          desc: 'Broad, many-jointed, and settled into itself. It carries the feeling of time well.'
-        };
-      }
-
-      if(m.symmetry >= 0.88 && m.width >= 7){
-        return {
-          title: 'Balanced Tree',
-          desc: 'Measured without becoming stiff. The canopy holds itself in a calm, believable proportion.'
-        };
-      }
-
-      if(m.diagonalFeeling >= Math.floor(m.total * 0.34) && m.width >= 8){
-        return {
-          title: 'Lyrical Tree',
-          desc: 'Its limbs travel in gentle diagonals, giving the whole silhouette a drawn, calligraphic feel.'
-        };
-      }
-
-      if(m.branching <= 5 && m.slenderness >= 2.0){
-        return {
-          title: 'Quiet Tree',
-          desc: 'Restrained and economical. Very little motion is wasted.'
-        };
-      }
-
-      return {
-        title: 'Evening Tree',
-        desc: 'Not easily pinned down. It feels more discovered than planned, which gives it charm.'
-      };
-    }
-
-    function updateLiveReading(){
+    function updateReading(){
       const m = getMetrics();
 
-      if(m.total <= 5){
-        setMood('Sapling', 'Still young. A direction is forming, but the canopy has not begun to speak yet.');
-        statusLineEl.textContent = 'Use diagonals early and the tree will feel less blocky.';
+      if(!m){
+        readTitleEl.textContent = 'Blank Canvas';
+        readDescEl.textContent = 'Lay in the trunk with 4 or 5, then taper into 3, 2, and 1 for limbs and twigs.';
         return;
       }
 
-      if(m.diagonalFeeling > m.total * 0.25){
-        setMood('Angled Growth', 'The limbs are starting to move in a more natural diagonal rhythm.');
-        statusLineEl.textContent = 'A little asymmetry will make the shape feel alive.';
+      if(m.total < 30){
+        readTitleEl.textContent = 'Beginning';
+        readDescEl.textContent = 'The trunk is only just arriving. Establish the lower mass before chasing fine detail.';
         return;
       }
 
-      if(m.width >= 8 && m.branching >= 8){
-        setMood('Opening Canopy', 'The tree is spreading into finer structure now. Negative space matters more than ever.');
-        statusLineEl.textContent = 'Try leaving pockets of air instead of filling every possibility.';
+      if(m.slenderness >= 2.8 && m.width <= 8){
+        readTitleEl.textContent = 'Rising Tree';
+        readDescEl.textContent = 'Very vertical so far. A few branching gestures could keep it from feeling too rigid.';
         return;
       }
 
-      if(Math.abs(m.leftCount - m.rightCount) >= 6){
-        setMood('Leaning', 'Its weight is drifting to one side. That can become character if you lean into it.');
-        statusLineEl.textContent = 'Balance it, or commit and make the tilt intentional.';
+      if(m.diagonalRatio >= 0.34 && m.tipRatio >= 0.11){
+        readTitleEl.textContent = 'Natural Branching';
+        readDescEl.textContent = 'The silhouette is starting to break into believable limbs and lighter tips. Keep the tapering gentle.';
         return;
       }
 
-      if(m.slenderness >= 2.4){
-        setMood('Rising', 'The silhouette is staying narrow and vertical so far. It feels disciplined.');
-        statusLineEl.textContent = 'One or two delicate side branches could open it up beautifully.';
+      if(m.densityRatio >= 0.45){
+        readTitleEl.textContent = 'Heavy Core';
+        readDescEl.textContent = 'There is strong trunk mass here, but it may want more carved negative space higher up.';
         return;
       }
 
-      setMood('Growing', 'The form is still deciding itself. The next few placements will define its personality.');
-      statusLineEl.textContent = 'Look at the silhouette, not just the lit cells.';
+      if(m.symmetry >= 0.88 && m.width >= 10){
+        readTitleEl.textContent = 'Balanced Tree';
+        readDescEl.textContent = 'The weight feels even without going flat. This could become a convincing yard tree.';
+        return;
+      }
+
+      readTitleEl.textContent = 'Developing Silhouette';
+      readDescEl.textContent = 'The structure is still deciding itself. Use erase to carve air, and smaller sizes to taper the branch ends.';
     }
 
-    function finishTree(){
-      if(finished) return;
-      finished = true;
-      render();
-
-      const reading = readTree(getMetrics());
-      setMood(reading.title, reading.desc);
-      statusLineEl.textContent = 'Finished. You made: ' + reading.title + '.';
+    function beginPointer(clientX, clientY){
+      isPointerDown = true;
+      lastPaintKey = null;
+      const cell = getCellFromPoint(clientX, clientY);
+      if(cell) paintAt(cell[0], cell[1]);
     }
 
-    resetBtn.addEventListener('click', resetGame);
-    finishBtn.addEventListener('click', finishTree);
+    function movePointer(clientX, clientY){
+      if(!isPointerDown) return;
+      const cell = getCellFromPoint(clientX, clientY);
+      if(cell) paintAt(cell[0], cell[1]);
+    }
 
-    sizeButtons.forEach(btn => {
-      btn.addEventListener('click', () => {
-        const nextSize = btn.dataset.size;
-        currentSize = nextSize;
-        sizeButtons.forEach(b => b.classList.toggle('active', b === btn));
-        resetGame();
-      });
+    function endPointer(){
+      isPointerDown = false;
+      lastPaintKey = null;
+    }
+
+    document.addEventListener('pointerdown', (e) => {
+      if(e.target.closest('button')) return;
+      beginPointer(e.clientX, e.clientY);
     });
 
-    resetGame();
+    document.addEventListener('pointermove', (e) => {
+      movePointer(e.clientX, e.clientY);
+    });
+
+    document.addEventListener('pointerup', endPointer);
+    document.addEventListener('pointercancel', endPointer);
+
+    sizeButtons.forEach(btn => {
+      btn.addEventListener('click', () => setBrushSize(Number(btn.dataset.size)));
+    });
+
+    modeButtons.forEach(btn => {
+      btn.addEventListener('click', () => setMode(btn.dataset.mode));
+    });
+
+    clearBtn.addEventListener('click', clearTree);
+    seedBtn.addEventListener('click', seedTrunk);
+
+    createGrid();
+    render();
+    updateReading();
   </script>
 </body>
 </html>
