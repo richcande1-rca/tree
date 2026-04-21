@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>Tree v3.6</title>
+  <title>Tree v3.7</title>
   <style>
     :root{
       --panel:rgba(9,14,24,.80);
@@ -95,9 +95,16 @@
 
     .mode-row, .action-row{
       display:grid;
-      grid-template-columns:1fr 1fr;
       gap:10px;
       margin-top:10px;
+    }
+
+    .mode-row{
+      grid-template-columns:repeat(3, 1fr);
+    }
+
+    .action-row{
+      grid-template-columns:1fr 1fr;
     }
 
     button{
@@ -125,7 +132,9 @@
     button:active{transform:translateY(1px)}
 
     .size-btn.active,
+    .mobile-size-btn.active,
     .mode-btn.active,
+    .mobile-mode-btn.active,
     .lock-btn.active{
       border-color:rgba(176,231,176,.45);
       background:linear-gradient(180deg, rgba(134,187,126,.42), rgba(90,130,86,.26));
@@ -145,7 +154,7 @@
 
     .stat-grid{
       display:grid;
-      grid-template-columns:1fr 1fr;
+      grid-template-columns:repeat(auto-fit, minmax(92px, 1fr));
       gap:10px;
     }
 
@@ -279,7 +288,8 @@
       box-shadow: inset 0 0 0 1px rgba(255,255,255,.02);
     }
 
-    .cell.filled{
+    .cell.filled,
+    .cell.leafed{
       background:transparent;
       box-shadow:none;
     }
@@ -339,6 +349,21 @@
     .diag.ur{ transform:translate(-28%, -72%) rotate(45deg); }
     .diag.dl{ transform:translate(-72%, -28%) rotate(45deg); }
     .diag.dr{ transform:translate(-28%, -28%) rotate(-45deg); }
+
+    .leaf{
+      position:absolute;
+      left:50%;
+      top:50%;
+      width:var(--leaf-w, 60%);
+      height:var(--leaf-h, 60%);
+      transform:translate(-50%, -50%) rotate(var(--leaf-rot, 0deg));
+      border-radius:62% 38% 58% 42% / 48% 62% 38% 52%;
+      background:var(--leaf-fill, linear-gradient(180deg, #b5ebb5, #6eab6e));
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,.16),
+        0 2px 6px rgba(41,73,39,.24);
+      pointer-events:none;
+    }
 
     .tip::after{
       pointer-events:none;
@@ -447,6 +472,7 @@
       }
 
       .dock-top,
+      .dock-modes,
       .dock-middle,
       .dock-bottom{
         display:grid;
@@ -455,7 +481,11 @@
       }
 
       .dock-top{
-        grid-template-columns:1.15fr .85fr;
+        grid-template-columns:1fr;
+      }
+
+      .dock-modes{
+        grid-template-columns:repeat(3, 1fr);
       }
 
       .dock-middle{
@@ -510,7 +540,7 @@
     <aside class="panel">
       <h1>Tree</h1>
       <p class="subtitle">
-        One fine master grid. Sizes 1–5 work like branch brushes: trunk mass first, then thinner limbs and twigs.
+        Build the trunk in wood, taper the branches, then leaf it out. Sizes 1–5 work like branch brushes from trunk mass to fine twigs.
       </p>
 
       <div class="tool-box">
@@ -525,7 +555,8 @@
 
         <div class="box-title" style="margin-top:8px;">Mode</div>
         <div class="mode-row">
-          <button class="mode-btn active" data-mode="draw">Wood</button>
+          <button class="mode-btn active" data-mode="wood">Wood</button>
+          <button class="mode-btn" data-mode="leaf">Leaves</button>
           <button class="mode-btn" data-mode="erase">Erase</button>
         </div>
 
@@ -539,8 +570,12 @@
         <div class="box-title">Shape Notes</div>
         <div class="stat-grid">
           <div class="stat">
-            <div class="stat-label">Filled Cells</div>
+            <div class="stat-label">Wood Cells</div>
             <div class="stat-value" id="filledCount">0</div>
+          </div>
+          <div class="stat">
+            <div class="stat-label">Leaf Cells</div>
+            <div class="stat-value" id="leafCount">0</div>
           </div>
           <div class="stat">
             <div class="stat-label">Brush Size</div>
@@ -552,11 +587,11 @@
       <div class="read-box">
         <div class="box-title">Current Reading</div>
         <div class="read-title" id="readTitle">Blank Canvas</div>
-        <div class="read-desc" id="readDesc">Lay in the trunk with 4 or 5, then taper into 3, 2, and 1 for limbs and twigs.</div>
+        <div class="read-desc" id="readDesc">Lay in the trunk with 4 or 5, taper into 3, 2, and 1 for limbs and twigs, then add leaves beside the branches.</div>
       </div>
 
       <div class="rules">
-        Tap or drag to paint wood onto the fine grid. On phones, the controls move to a tighter sticky dock below the tree.
+        Tap or drag to paint wood, then switch to leaves. Leaf painting grows only on empty cells beside branches or nearby leaves. On phones, the controls move to a tighter sticky dock below the tree.
       </div>
     </aside>
 
@@ -575,7 +610,12 @@
 
         <div class="dock-top">
           <button class="lock-btn active" id="drawLockBtn">Draw On</button>
-          <button class="mobile-mode-btn active" data-mode="draw">Wood</button>
+        </div>
+
+        <div class="dock-modes">
+          <button class="mobile-mode-btn active" data-mode="wood">Wood</button>
+          <button class="mobile-mode-btn" data-mode="leaf">Leaves</button>
+          <button class="mobile-mode-btn" data-mode="erase">Erase</button>
         </div>
 
         <div class="dock-middle">
@@ -607,6 +647,7 @@
     const gridEl = document.getElementById('grid');
     const gridFrameEl = gridEl.parentElement;
     const filledCountEl = document.getElementById('filledCount');
+    const leafCountEl = document.getElementById('leafCount');
     const brushValueEl = document.getElementById('brushValue');
     const readTitleEl = document.getElementById('readTitle');
     const readDescEl = document.getElementById('readDesc');
@@ -614,9 +655,10 @@
     const statusLineEl = document.getElementById('statusLine');
 
     let brushSize = 4;
-    let mode = 'draw';
+    let mode = 'wood';
     let cells = [];
     let filled = new Set();
+    let leaves = new Set();
     let isPointerDown = false;
     let lastPaintKey = null;
     let drawEnabled = true;
@@ -624,6 +666,7 @@
     function key(r, c){ return `${r},${c}`; }
     function inBounds(r, c){ return r >= 0 && r < ROWS && c >= 0 && c < COLS; }
     function isFilled(r, c){ return filled.has(key(r,c)); }
+    function isLeaf(r, c){ return leaves.has(key(r,c)); }
 
     function createGrid(){
       gridEl.style.gridTemplateColumns = `repeat(${COLS}, var(--computed-cell-size))`;
@@ -673,6 +716,24 @@
       return offsets;
     }
 
+    function hasNearby(set, r, c, radius = 1){
+      for(let dr = -radius; dr <= radius; dr++){
+        for(let dc = -radius; dc <= radius; dc++){
+          if(dr === 0 && dc === 0) continue;
+          const rr = r + dr;
+          const cc = c + dc;
+          if(inBounds(rr, cc) && set.has(key(rr, cc))) return true;
+        }
+      }
+      return false;
+    }
+
+    function canPlaceLeaf(r, c){
+      if(!inBounds(r, c) || isFilled(r, c)) return false;
+      if(hasNearby(filled, r, c, 1)) return true;
+      return hasNearby(leaves, r, c, 1) && hasNearby(filled, r, c, 2);
+    }
+
     function paintAt(r, c){
       const k = key(r,c);
       if(lastPaintKey === `${mode}:${brushSize}:${k}`) return;
@@ -684,8 +745,16 @@
         const cc = c + dc;
         if(!inBounds(rr, cc)) continue;
         const cellKey = key(rr, cc);
-        if(mode === 'draw') filled.add(cellKey);
-        else filled.delete(cellKey);
+
+        if(mode === 'wood'){
+          filled.add(cellKey);
+          leaves.delete(cellKey);
+        } else if(mode === 'leaf'){
+          if(canPlaceLeaf(rr, cc)) leaves.add(cellKey);
+        } else {
+          filled.delete(cellKey);
+          leaves.delete(cellKey);
+        }
       }
 
       render();
@@ -722,6 +791,7 @@
 
     function clearTree(){
       filled.clear();
+      leaves.clear();
       render();
       updateReading();
       updateStatusLine('Canvas cleared.');
@@ -849,6 +919,31 @@
       cell.appendChild(diag);
     }
 
+    function leafAppearance(r, c){
+      const nearbyLeaves = [
+        isLeaf(r - 1, c), isLeaf(r + 1, c), isLeaf(r, c - 1), isLeaf(r, c + 1),
+        isLeaf(r - 1, c - 1), isLeaf(r - 1, c + 1), isLeaf(r + 1, c - 1), isLeaf(r + 1, c + 1)
+      ].filter(Boolean).length;
+      const seed = ((r * 17) + (c * 29)) % 5;
+      const widths = [54, 58, 62, 56, 60];
+      const heights = [50, 56, 60, 54, 58];
+      const rotations = [-18, -8, 0, 10, 18];
+      const fills = [
+        'linear-gradient(180deg, #b9efb9, #72b172)',
+        'linear-gradient(180deg, #c2f5b8, #7fbc70)',
+        'linear-gradient(180deg, #b4ecaa, #69a965)',
+        'linear-gradient(180deg, #c9f2bf, #7ab777)',
+        'linear-gradient(180deg, #b7e8b7, #74ad74)'
+      ];
+      const sizeBoost = Math.min(8, nearbyLeaves * 2);
+      return {
+        w: widths[seed] + sizeBoost,
+        h: heights[seed] + sizeBoost,
+        rot: rotations[seed],
+        fill: fills[seed]
+      };
+    }
+
     function render(){
       for(let r = 0; r < ROWS; r++){
         for(let c = 0; c < COLS; c++){
@@ -856,6 +951,7 @@
           cell.className = 'cell';
           cell.innerHTML = '';
           cell.style.removeProperty('--wood-fill');
+          cell.style.removeProperty('--leaf-fill');
 
           if(isFilled(r,c)){
             cell.classList.add('filled');
@@ -880,10 +976,21 @@
             if(shape.dr && !shape.down && !shape.right) addDiag(cell, 'dr');
 
             if(isTip(r,c) && r < ROWS - 2) cell.classList.add('tip');
+          } else if(isLeaf(r,c)){
+            cell.classList.add('leafed');
+            const leafLook = leafAppearance(r,c);
+            const leaf = document.createElement('div');
+            leaf.className = 'leaf';
+            leaf.style.setProperty('--leaf-w', `${leafLook.w}%`);
+            leaf.style.setProperty('--leaf-h', `${leafLook.h}%`);
+            leaf.style.setProperty('--leaf-rot', `${leafLook.rot}deg`);
+            leaf.style.setProperty('--leaf-fill', leafLook.fill);
+            cell.appendChild(leaf);
           }
         }
       }
       filledCountEl.textContent = String(filled.size);
+      leafCountEl.textContent = String(leaves.size);
     }
 
     function getMetrics(){
@@ -919,15 +1026,33 @@
         if(isTip(r,c)) tips++;
       }
 
+      let leafTop = null;
+      let leafBottom = null;
+      let leafLeft = null;
+      let leafRight = null;
+      if(leaves.size){
+        const leafCoords = [...leaves].map(k => k.split(',').map(Number));
+        const leafRows = leafCoords.map(([r]) => r);
+        const leafCols = leafCoords.map(([,c]) => c);
+        leafTop = Math.min(...leafRows);
+        leafBottom = Math.max(...leafRows);
+        leafLeft = Math.min(...leafCols);
+        leafRight = Math.max(...leafCols);
+      }
+
       return {
         total: coords.length,
+        leafTotal: leaves.size,
         height,
         width,
+        leafHeight: leafTop === null ? 0 : (leafBottom - leafTop + 1),
+        leafWidth: leafLeft === null ? 0 : (leafRight - leafLeft + 1),
         symmetry: 1 - Math.abs(leftCount - rightCount) / Math.max(1, leftCount + rightCount),
         slenderness: height / Math.max(1, width),
         diagonalRatio: diagonal / Math.max(1, coords.length),
         densityRatio: dense / Math.max(1, coords.length),
-        tipRatio: tips / Math.max(1, coords.length)
+        tipRatio: tips / Math.max(1, coords.length),
+        canopyRatio: leaves.size / Math.max(1, coords.length)
       };
     }
 
@@ -936,13 +1061,31 @@
 
       if(!m){
         readTitleEl.textContent = 'Blank Canvas';
-        readDescEl.textContent = 'Lay in the trunk with 4 or 5, then taper into 3, 2, and 1 for limbs and twigs.';
+        readDescEl.textContent = 'Lay in the trunk with 4 or 5, taper into 3, 2, and 1 for limbs and twigs, then add leaves beside the branches.';
         return;
       }
 
       if(m.total < 30){
         readTitleEl.textContent = 'Beginning';
         readDescEl.textContent = 'The trunk is only just arriving. Establish the lower mass before chasing fine detail.';
+        return;
+      }
+
+      if(m.leafTotal > 0){
+        if(m.leafTotal < 18){
+          readTitleEl.textContent = 'First Leaves';
+          readDescEl.textContent = 'The tree is just starting to leaf out. Cluster small touches around branch tips and let the canopy spread lightly.';
+          return;
+        }
+
+        if(m.canopyRatio >= 0.9){
+          readTitleEl.textContent = 'Full Canopy';
+          readDescEl.textContent = 'Now it feels lush. Carve small gaps with erase so the canopy breathes and the branch structure still reads through.';
+          return;
+        }
+
+        readTitleEl.textContent = 'Leafing Out';
+        readDescEl.textContent = 'The canopy is forming nicely. Let the leaves gather near branch ends and avoid filling every open space.';
         return;
       }
 
@@ -971,23 +1114,28 @@
       }
 
       readTitleEl.textContent = 'Developing Silhouette';
-      readDescEl.textContent = 'The structure is still deciding itself. Use erase to carve air, and smaller sizes to taper the branch ends.';
+      readDescEl.textContent = 'The structure is still deciding itself. Use erase to carve air, smaller sizes to taper branch ends, and leaves to build the crown.';
     }
 
     function updateStatusLine(prefix=''){
       let text = prefix ? prefix + ' ' : '';
+      const modeLabel = mode === 'wood' ? 'Wood' : mode === 'leaf' ? 'Leaves' : 'Erase';
 
       if (window.matchMedia('(max-width: 860px)').matches) {
         text += drawEnabled
-          ? `Draw is ON · ${mode === 'draw' ? 'Wood' : 'Erase'} · size ${brushSize}`
+          ? `Draw is ON · ${modeLabel} · size ${brushSize}`
           : 'Draw is OFF · safe to scroll';
         mobileStatusEl.textContent = text;
         return;
       }
 
-      statusLineEl.textContent = text || (mode === 'draw'
+      const defaultText = mode === 'wood'
         ? 'Paint the trunk first. Let it taper as it rises.'
-        : 'Erase to carve negative space and refine the silhouette.');
+        : mode === 'leaf'
+          ? 'Add leaves beside the branches to build the canopy.'
+          : 'Erase wood or leaves to carve air and refine the silhouette.';
+
+      statusLineEl.textContent = text || defaultText;
     }
 
     function beginPointer(clientX, clientY){
