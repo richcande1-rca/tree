@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>Tree v3.5</title>
+  <title>Tree v3.6</title>
   <style>
     :root{
       --panel:rgba(9,14,24,.80);
@@ -284,16 +284,64 @@
       box-shadow:none;
     }
 
-    .wood{
+    .wood,
+    .conn,
+    .diag{
       position:absolute;
-      inset:1px;
+      background:var(--wood-fill);
       border-radius:999px;
       box-shadow:
         inset 0 1px 0 rgba(255,255,255,.10),
         0 2px 6px rgba(0,0,0,.20);
+      pointer-events:none;
     }
 
+    .wood{
+      left:50%;
+      top:50%;
+      width:var(--wood-w, 72%);
+      height:var(--wood-h, 72%);
+      transform:translate(-50%, -50%);
+    }
+
+    .conn.up,
+    .conn.down{
+      left:50%;
+      width:var(--conn-vw, 54%);
+      height:58%;
+      transform:translateX(-50%);
+    }
+
+    .conn.up{ top:0; }
+    .conn.down{ bottom:0; }
+
+    .conn.left,
+    .conn.right{
+      top:50%;
+      width:58%;
+      height:var(--conn-hh, 54%);
+      transform:translateY(-50%);
+    }
+
+    .conn.left{ left:0; }
+    .conn.right{ right:0; }
+
+    .diag{
+      width:28%;
+      height:66%;
+      left:50%;
+      top:50%;
+      transform-origin:center;
+      opacity:.98;
+    }
+
+    .diag.ul{ transform:translate(-72%, -72%) rotate(-45deg); }
+    .diag.ur{ transform:translate(-28%, -72%) rotate(45deg); }
+    .diag.dl{ transform:translate(-72%, -28%) rotate(45deg); }
+    .diag.dr{ transform:translate(-28%, -28%) rotate(-45deg); }
+
     .tip::after{
+      pointer-events:none;
       content:"";
       position:absolute;
       width:5px;
@@ -646,8 +694,9 @@
 
     function getCellFromPoint(clientX, clientY){
       const el = document.elementFromPoint(clientX, clientY);
-      if(!el || !el.classList.contains('cell')) return null;
-      return [Number(el.dataset.r), Number(el.dataset.c)];
+      const cell = el?.closest?.('.cell');
+      if(!cell) return null;
+      return [Number(cell.dataset.r), Number(cell.dataset.c)];
     }
 
     function setMode(nextMode){
@@ -732,19 +781,104 @@
       return 'linear-gradient(180deg, #6f5545, #4b352a)';
     }
 
+    function getWoodShape(r, c){
+      const up = inBounds(r - 1, c) && isFilled(r - 1, c);
+      const down = inBounds(r + 1, c) && isFilled(r + 1, c);
+      const left = inBounds(r, c - 1) && isFilled(r, c - 1);
+      const right = inBounds(r, c + 1) && isFilled(r, c + 1);
+      const ul = inBounds(r - 1, c - 1) && isFilled(r - 1, c - 1);
+      const ur = inBounds(r - 1, c + 1) && isFilled(r - 1, c + 1);
+      const dl = inBounds(r + 1, c - 1) && isFilled(r + 1, c - 1);
+      const dr = inBounds(r + 1, c + 1) && isFilled(r + 1, c + 1);
+      const n = neighborCount(r, c);
+      const vertical = up || down;
+      const horizontal = left || right;
+
+      let w = 72;
+      let h = 72;
+
+      if(n >= 6){
+        w = 94;
+        h = 94;
+      } else if(n >= 4){
+        w = 86;
+        h = 86;
+      } else if(n === 3){
+        w = 80;
+        h = 80;
+      } else if(n <= 1){
+        w = 56;
+        h = 56;
+      } else {
+        w = 68;
+        h = 68;
+      }
+
+      if(vertical && !horizontal){
+        w = Math.max(46, w - 12);
+        h = Math.min(96, h + 14);
+      } else if(horizontal && !vertical){
+        h = Math.max(46, h - 12);
+        w = Math.min(96, w + 14);
+      } else if(vertical && horizontal){
+        w = Math.min(96, w + 4);
+        h = Math.min(96, h + 4);
+      }
+
+      return {
+        n,
+        up, down, left, right,
+        ul, ur, dl, dr,
+        w, h,
+        connVW: Math.max(34, Math.min(82, w - 10)),
+        connHH: Math.max(34, Math.min(82, h - 10))
+      };
+    }
+
+    function addConnector(cell, dir, shape){
+      const conn = document.createElement('div');
+      conn.className = `conn ${dir}`;
+      conn.style.setProperty('--conn-vw', `${shape.connVW}%`);
+      conn.style.setProperty('--conn-hh', `${shape.connHH}%`);
+      cell.appendChild(conn);
+    }
+
+    function addDiag(cell, dir){
+      const diag = document.createElement('div');
+      diag.className = `diag ${dir}`;
+      cell.appendChild(diag);
+    }
+
     function render(){
       for(let r = 0; r < ROWS; r++){
         for(let c = 0; c < COLS; c++){
           const cell = cells[r][c];
           cell.className = 'cell';
           cell.innerHTML = '';
+          cell.style.removeProperty('--wood-fill');
 
           if(isFilled(r,c)){
             cell.classList.add('filled');
+            const color = woodColor(r,c);
+            const shape = getWoodShape(r,c);
+            cell.style.setProperty('--wood-fill', color);
+
             const wood = document.createElement('div');
             wood.className = 'wood';
-            wood.style.background = woodColor(r,c);
+            wood.style.setProperty('--wood-w', `${shape.w}%`);
+            wood.style.setProperty('--wood-h', `${shape.h}%`);
             cell.appendChild(wood);
+
+            if(shape.up) addConnector(cell, 'up', shape);
+            if(shape.down) addConnector(cell, 'down', shape);
+            if(shape.left) addConnector(cell, 'left', shape);
+            if(shape.right) addConnector(cell, 'right', shape);
+
+            if(shape.ul && !shape.up && !shape.left) addDiag(cell, 'ul');
+            if(shape.ur && !shape.up && !shape.right) addDiag(cell, 'ur');
+            if(shape.dl && !shape.down && !shape.left) addDiag(cell, 'dl');
+            if(shape.dr && !shape.down && !shape.right) addDiag(cell, 'dr');
+
             if(isTip(r,c) && r < ROWS - 2) cell.classList.add('tip');
           }
         }
@@ -907,6 +1041,7 @@
     });
 
     createGrid();
+    fitGridToFrame();
     render();
     updateReading();
     updateStatusLine();
