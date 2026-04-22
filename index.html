@@ -65,7 +65,7 @@
     .panel{
       position:relative;
       min-height:0;
-      overflow:auto;
+      overflow:hidden;
       padding:22px 20px;
       border-radius:28px;
       border:1px solid rgba(204,167,103,.18);
@@ -338,33 +338,6 @@
       border-color:rgba(201,154,86,.32);
       background:linear-gradient(180deg, rgba(101,65,38,.96), rgba(31,18,11,.98));
     }
-
-    .stat-grid{
-      display:grid;
-      grid-template-columns:repeat(auto-fit, minmax(92px, 1fr));
-      gap:10px;
-    }
-
-    .stat{
-      border:1px solid rgba(190,149,88,.12);
-      border-radius:14px;
-      padding:12px 10px;
-      background:linear-gradient(180deg, rgba(255,225,185,.03), rgba(0,0,0,.12));
-    }
-
-    .stat-label{
-      color:var(--muted-soft);
-      font-size:.8rem;
-      margin-bottom:6px;
-      text-transform:uppercase;
-      letter-spacing:.08em;
-    }
-
-    .stat-value{
-      font-size:1.46rem;
-      color:#f0e3cc;
-    }
-
     .read-title{
       font-size:1.45rem;
       margin-bottom:8px;
@@ -627,7 +600,7 @@
 
     @media (max-width: 860px){
       :root{ --cell-size:8px; --scene-min:620px; }
-      body{ overflow:auto; min-height:100svh; }
+      body{ overflow:hidden; min-height:100svh; }
       .app{
         height:auto;
         min-height:100svh;
@@ -744,25 +717,6 @@
           <button id="seedBtn">Seed Trunk</button>
         </div>
       </div>
-
-      <div class="stat-box">
-        <div class="box-title">Shape Notes</div>
-        <div class="stat-grid">
-          <div class="stat">
-            <div class="stat-label">Wood Cells</div>
-            <div class="stat-value" id="filledCount">0</div>
-          </div>
-          <div class="stat">
-            <div class="stat-label">Leaf Cells</div>
-            <div class="stat-value" id="leafCount">0</div>
-          </div>
-          <div class="stat">
-            <div class="stat-label">Brush Size</div>
-            <div class="stat-value" id="brushValue">4</div>
-          </div>
-        </div>
-      </div>
-
       <div class="read-box">
         <div class="box-title">Tree Reading</div>
         <div class="read-title" id="readTitle">Blank Canvas</div>
@@ -846,9 +800,6 @@
 
     const gridEl = document.getElementById('grid');
     const gridFrameEl = gridEl.parentElement;
-    const filledCountEl = document.getElementById('filledCount');
-    const leafCountEl = document.getElementById('leafCount');
-    const brushValueEl = document.getElementById('brushValue');
     const readTitleEl = document.getElementById('readTitle');
     const readDescEl = document.getElementById('readDesc');
     const mobileStatusEl = document.getElementById('mobileStatus');
@@ -976,7 +927,6 @@
 
     function setBrushSize(size){
       brushSize = size;
-      brushValueEl.textContent = String(size);
       sizeButtons.forEach(btn => btn.classList.toggle('active', Number(btn.dataset.size) === brushSize));
       updateStatusLine();
     }
@@ -1175,8 +1125,6 @@
           }
         }
       }
-      filledCountEl.textContent = String(filled.size);
-      leafCountEl.textContent = String(leaves.size);
     }
 
     function getMetrics(){
