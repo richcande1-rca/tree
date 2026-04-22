@@ -10,10 +10,14 @@
       --muted:#c6b59a;
       --muted-soft:#9e8e75;
       --gold:#c6a166;
-      --wood-light:#6f4c2d;
-      --wood-mid:#4c311d;
-      --wood-dark:#25170f;
+      --wood-light:#7b5537;
+      --wood-mid:#5a3b24;
+      --wood-dark:#2f1d12;
       --wood-black:#130c08;
+      --bark-highlight:#c89e79;
+      --bark-mid:#9b6d49;
+      --bark-shadow:#5d3b24;
+      --bark-deep:#2a170d;
       --grid:rgba(245,236,216,.040);
       --cell-size:7px;
       --computed-cell-size: var(--cell-size);
@@ -521,10 +525,46 @@
       height:var(--core-h, 96%);
       border-radius:2px;
       background:
-        linear-gradient(180deg, rgba(188,146,113,.96), rgba(96,67,48,.98));
+        linear-gradient(180deg,
+          var(--bark-hi, #c89e79) 0%,
+          var(--bark-mid, #9b6d49) 24%,
+          var(--bark-shadow, #5d3b24) 78%,
+          var(--bark-deep, #2a170d) 100%);
       box-shadow:
-        inset 0 1px 0 rgba(255,232,205,.08),
-        0 0 0 1px rgba(40,25,17,.14);
+        inset 0 1px 0 rgba(255,232,205,.10),
+        inset 1px 0 0 rgba(255,219,184,.05),
+        inset -1px 0 0 rgba(31,18,11,.18),
+        0 0 0 1px rgba(37,21,12,.14);
+      overflow:hidden;
+    }
+
+    .mosaic-core::before{
+      content:"";
+      position:absolute;
+      inset:0;
+      background:
+        repeating-linear-gradient(180deg,
+          rgba(255,232,205,.045) 0 1px,
+          rgba(0,0,0,0) 1px 3px,
+          rgba(58,34,20,.08) 3px 4px,
+          rgba(0,0,0,0) 4px 7px
+        );
+      opacity:.95;
+      mix-blend-mode:overlay;
+      pointer-events:none;
+    }
+
+    .mosaic-core::after{
+      content:"";
+      position:absolute;
+      inset:0;
+      background:
+        linear-gradient(90deg,
+          rgba(255,224,188,.07) 0%,
+          rgba(0,0,0,0) 30%,
+          rgba(0,0,0,0) 70%,
+          rgba(32,18,10,.14) 100%);
+      pointer-events:none;
     }
 
     .mosaic-link{
@@ -532,8 +572,31 @@
       height:var(--link-h, 100%);
       border-radius:1px;
       background:
-        linear-gradient(180deg, rgba(174,134,102,.94), rgba(88,61,44,.96));
-      opacity:.96;
+        linear-gradient(180deg,
+          var(--bark-hi, #c89e79) 0%,
+          var(--bark-mid, #9b6d49) 26%,
+          var(--bark-shadow, #5d3b24) 80%,
+          var(--bark-deep, #2a170d) 100%);
+      box-shadow:
+        inset 0 1px 0 rgba(255,232,205,.07),
+        0 0 0 1px rgba(37,21,12,.10);
+      overflow:hidden;
+      opacity:.98;
+    }
+
+    .mosaic-link::before{
+      content:"";
+      position:absolute;
+      inset:0;
+      background:
+        repeating-linear-gradient(180deg,
+          rgba(255,229,197,.035) 0 1px,
+          rgba(0,0,0,0) 1px 3px,
+          rgba(49,30,18,.07) 3px 4px,
+          rgba(0,0,0,0) 4px 7px
+        );
+      mix-blend-mode:overlay;
+      pointer-events:none;
     }
 
     .mosaic-leaf{
@@ -979,9 +1042,28 @@
 
     function woodColor(r, c){
       const n = neighborCount(r,c);
-      if(n >= 6) return { core:'#c29a7a', dark:'#6d4b36' };
-      if(n >= 3) return { core:'#b48868', dark:'#624330' };
-      return { core:'#a97b5d', dark:'#54392a' };
+      if(n >= 6){
+        return {
+          hi:'#d3ac88',
+          mid:'#a77752',
+          shadow:'#684229',
+          deep:'#2f1a0f'
+        };
+      }
+      if(n >= 3){
+        return {
+          hi:'#c89e79',
+          mid:'#986947',
+          shadow:'#5e3b24',
+          deep:'#29170d'
+        };
+      }
+      return {
+        hi:'#bc906d',
+        mid:'#8d603f',
+        shadow:'#55341f',
+        deep:'#24140c'
+      };
     }
 
     function getWoodShape(r, c){
@@ -1034,7 +1116,10 @@
             core.className = 'mosaic-core';
             core.style.setProperty('--core-w', `${shape.coreW}%`);
             core.style.setProperty('--core-h', `${shape.coreH}%`);
-            core.style.background = `linear-gradient(180deg, ${color.core}, ${color.dark})`;
+            core.style.setProperty('--bark-hi', color.hi);
+            core.style.setProperty('--bark-mid', color.mid);
+            core.style.setProperty('--bark-shadow', color.shadow);
+            core.style.setProperty('--bark-deep', color.deep);
             cell.appendChild(core);
 
             const linkIf = (cond, w, h, x, y) => {
@@ -1046,7 +1131,10 @@
               link.style.left = x;
               link.style.top = y;
               link.style.transform = 'translate(-50%, -50%)';
-              link.style.background = `linear-gradient(180deg, ${color.core}ee, ${color.dark}f0)`;
+              link.style.setProperty('--bark-hi', color.hi);
+              link.style.setProperty('--bark-mid', color.mid);
+              link.style.setProperty('--bark-shadow', color.shadow);
+              link.style.setProperty('--bark-deep', color.deep);
               cell.appendChild(link);
             };
 
