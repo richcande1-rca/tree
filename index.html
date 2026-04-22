@@ -14,15 +14,13 @@
       --wood-mid:#4c311d;
       --wood-dark:#25170f;
       --wood-black:#130c08;
-      --grid:rgba(236,229,213,.018);
-      --ink-paper:rgba(214,199,171,.045);
-      --ink-wash:rgba(21,31,46,.22);
-      --cell-size:11px;
+      --grid:rgba(245,236,216,.040);
+      --cell-size:7px;
       --computed-cell-size: var(--cell-size);
-      --gap:1px;
-      --panel-width:384px;
+      --gap:0px;
+      --panel-width:380px;
       --scene-min:640px;
-      --mobile-dock-h: 122px;
+      --mobile-dock-h: 126px;
       --frame-pad-x: 18px;
       --frame-pad-y: 18px;
     }
@@ -68,7 +66,7 @@
       position:relative;
       min-height:0;
       overflow:hidden;
-      padding:22px 20px;
+      padding:20px 18px;
       border-radius:28px;
       border:1px solid rgba(204,167,103,.18);
       box-shadow:
@@ -163,7 +161,7 @@
 
     h1{
       margin:0;
-      font-size:2.4rem;
+      font-size:2.25rem;
       letter-spacing:.06em;
       font-weight:normal;
       color:#f3e7d0;
@@ -171,7 +169,7 @@
     }
 
     .subtitle{
-      margin:0 0 18px 0;
+      margin:0 0 14px 0;
       color:var(--muted);
       line-height:1.55;
       font-size:1rem;
@@ -415,12 +413,11 @@
       overflow:hidden;
       isolation:isolate;
       background:
-        radial-gradient(circle at 50% 12%, rgba(212,225,255,.06), transparent 18%),
-        radial-gradient(circle at 50% 30%, rgba(255,255,255,.025), transparent 34%),
-        linear-gradient(180deg, rgba(16,24,36,.94) 0%, rgba(10,16,28,.98) 62%, rgba(7,11,18,1) 100%);
+        radial-gradient(circle at 50% 12%, rgba(212,225,255,.05), transparent 18%),
+        linear-gradient(180deg, rgba(17,24,35,.96) 0%, rgba(10,16,26,.98) 62%, rgba(7,11,18,1) 100%);
       box-shadow:
         inset 0 0 0 1px rgba(218,180,120,.08),
-        inset 0 20px 50px rgba(255,255,255,.012),
+        inset 0 18px 34px rgba(255,255,255,.010),
         inset 0 -30px 80px rgba(0,0,0,.22);
     }
 
@@ -445,25 +442,24 @@
       position:absolute;
       inset:0;
       background:
-        radial-gradient(circle at 12% 18%, rgba(255,255,255,.08) 0 1px, transparent 2px),
-        radial-gradient(circle at 24% 11%, rgba(255,255,255,.06) 0 1px, transparent 2px),
-        radial-gradient(circle at 38% 22%, rgba(255,255,255,.05) 0 1px, transparent 2px),
-        radial-gradient(circle at 63% 14%, rgba(255,255,255,.06) 0 1px, transparent 2px),
-        radial-gradient(circle at 79% 18%, rgba(255,255,255,.05) 0 1px, transparent 2px),
+        radial-gradient(circle at 12% 18%, rgba(255,255,255,.06) 0 1px, transparent 2px),
+        radial-gradient(circle at 24% 11%, rgba(255,255,255,.05) 0 1px, transparent 2px),
+        radial-gradient(circle at 38% 22%, rgba(255,255,255,.04) 0 1px, transparent 2px),
+        radial-gradient(circle at 63% 14%, rgba(255,255,255,.05) 0 1px, transparent 2px),
+        radial-gradient(circle at 79% 18%, rgba(255,255,255,.04) 0 1px, transparent 2px),
         repeating-linear-gradient(0deg,
-          transparent 0 9px,
-          rgba(214,199,171,.018) 9px 10px,
-          transparent 10px 19px
+          transparent 0 7px,
+          rgba(240,229,205,.028) 7px 8px,
+          transparent 8px 15px
         ),
         repeating-linear-gradient(90deg,
-          transparent 0 9px,
-          rgba(214,199,171,.012) 9px 10px,
-          transparent 10px 19px
+          transparent 0 7px,
+          rgba(240,229,205,.022) 7px 8px,
+          transparent 8px 15px
         );
-      opacity:.22;
+      opacity:.34;
       z-index:0;
       pointer-events:none;
-      mix-blend-mode:screen;
     }
 
     .corner-etch{
@@ -499,11 +495,10 @@
     .cell{
       width:var(--computed-cell-size);
       height:var(--computed-cell-size);
-      border-radius:50%;
+      border-radius:1px;
       background:var(--grid);
       position:relative;
       box-shadow: inset 0 0 0 1px rgba(255,255,255,.006);
-      opacity:.58;
     }
 
     .cell.filled,
@@ -511,97 +506,55 @@
       background:transparent;
       box-shadow:none;
     }
-    .brush-main,
-    .brush-secondary{
+    .mosaic-core,
+    .mosaic-link,
+    .mosaic-leaf{
       position:absolute;
       left:50%;
       top:50%;
-      transform:
-        translate(-50%, -50%)
-        rotate(var(--brush-rot, 0deg));
-      border-radius:999px;
+      transform:translate(-50%, -50%);
       pointer-events:none;
-      transform-origin:center;
     }
 
-    .brush-main{
-      width:var(--brush-len, 78%);
-      height:var(--brush-thick, 26%);
+    .mosaic-core{
+      width:var(--core-w, 96%);
+      height:var(--core-h, 96%);
+      border-radius:2px;
       background:
-        linear-gradient(90deg,
-          rgba(0,0,0,0) 0%,
-          rgba(73,48,32,.82) 18%,
-          rgba(124,92,69,.98) 48%,
-          rgba(76,53,38,.86) 80%,
-          rgba(0,0,0,0) 100%);
-      filter: blur(.2px);
+        linear-gradient(180deg, rgba(188,146,113,.96), rgba(96,67,48,.98));
       box-shadow:
-        0 1px 2px rgba(0,0,0,.18),
-        inset 0 1px 0 rgba(255,233,206,.08);
-      opacity:.98;
+        inset 0 1px 0 rgba(255,232,205,.08),
+        0 0 0 1px rgba(40,25,17,.14);
     }
 
-    .brush-secondary{
-      width:var(--brush2-len, 54%);
-      height:var(--brush2-thick, 20%);
+    .mosaic-link{
+      width:var(--link-w, 100%);
+      height:var(--link-h, 100%);
+      border-radius:1px;
       background:
-        linear-gradient(90deg,
-          rgba(0,0,0,0) 0%,
-          rgba(83,57,41,.72) 20%,
-          rgba(126,97,74,.92) 50%,
-          rgba(78,56,42,.74) 82%,
-          rgba(0,0,0,0) 100%);
-      transform:
-        translate(-50%, -50%)
-        rotate(var(--brush2-rot, 0deg));
-      opacity:var(--brush2-opacity, .88);
-      filter: blur(.25px);
+        linear-gradient(180deg, rgba(174,134,102,.94), rgba(88,61,44,.96));
+      opacity:.96;
     }
 
-    .leaf-spray{
-      position:absolute;
-      left:50%;
-      top:50%;
-      width:84%;
-      height:84%;
-      transform:translate(-50%, -50%) rotate(var(--spray-rot, 0deg));
-      pointer-events:none;
-    }
-
-    .leaf-dab{
-      position:absolute;
-      width:var(--dab-w, 28%);
-      height:var(--dab-h, 16%);
-      border-radius:999px;
+    .mosaic-leaf{
+      width:var(--leaf-block-w, 88%);
+      height:var(--leaf-block-h, 88%);
+      border-radius:2px;
       background:
-        linear-gradient(90deg,
-          rgba(0,0,0,0) 0%,
-          rgba(183,219,157,.80) 24%,
-          rgba(220,248,196,.98) 52%,
-          rgba(132,176,110,.78) 80%,
-          rgba(0,0,0,0) 100%);
-      transform:translate(-50%, -50%) rotate(var(--dab-rot, 0deg));
-      box-shadow:0 0 5px rgba(173,220,147,.10);
-      opacity:.95;
+        linear-gradient(180deg, rgba(192,226,168,.95), rgba(104,145,82,.98));
+      box-shadow:
+        inset 0 1px 0 rgba(236,255,226,.10),
+        0 0 0 1px rgba(43,72,37,.12);
     }
 
     .tip::after{
       pointer-events:none;
       content:"";
       position:absolute;
-      width:10px;
-      height:3px;
-      top:50%;
-      left:50%;
-      transform:translate(-50%, -50%) rotate(var(--tip-rot, -30deg));
-      border-radius:999px;
-      background:
-        linear-gradient(90deg,
-          rgba(0,0,0,0),
-          rgba(196,230,171,.84) 35%,
-          rgba(129,170,106,.72),
-          rgba(0,0,0,0));
-      opacity:.7;
+      inset:28%;
+      border-radius:1px;
+      background:linear-gradient(180deg, rgba(199,232,176,.86), rgba(112,155,90,.90));
+      opacity:.68;
     }
 
     .status-line{
@@ -621,12 +574,12 @@
     .mobile-dock{ display:none; }
 
     @media (max-width: 1180px){
-      :root{ --cell-size:10px; --panel-width:338px; }
+      :root{ --cell-size:6px; --panel-width:338px; }
       .app{ gap:18px; padding:18px; }
     }
 
     @media (max-width: 860px){
-      :root{ --cell-size:8px; --scene-min:620px; }
+      :root{ --cell-size:5px; --scene-min:620px; }
       body{ overflow:hidden; min-height:100svh; }
       .app{
         height:auto;
@@ -690,7 +643,7 @@
     }
 
     @media (max-width: 420px){
-      :root{ --cell-size:7px; --mobile-dock-h: 108px; }
+      :root{ --cell-size:4px; --mobile-dock-h: 108px; }
       .app{ padding:8px; gap:8px; }
       .scene{ min-height:68svh; }
       .mobile-dock button{ padding:8px 5px; font-size:.86rem; }
@@ -816,8 +769,8 @@
   </div>
 
   <script>
-    const COLS = 43;
-    const ROWS = 63;
+    const COLS = 72;
+    const ROWS = 96;
 
     const sizeButtons = [...document.querySelectorAll('.size-btn, .mobile-size-btn')];
     const modeButtons = [...document.querySelectorAll('.mode-btn, .mobile-mode-btn')];
@@ -881,7 +834,7 @@
     }
 
     function getBrushOffsets(size){
-      const radiusMap = { 1: 0, 2: 1, 3: 1.55, 4: 2.15, 5: 2.85 };
+      const radiusMap = { 1: 0, 2: 1, 3: 2.0, 4: 2.8, 5: 3.7 };
       const radius = radiusMap[size];
       const offsets = [];
 
@@ -1024,107 +977,43 @@
 
     function woodColor(r, c){
       const n = neighborCount(r,c);
-      if(n >= 6) return { mid:'#c29a7a', dark:'#6d4b36', alpha:.98 };
-      if(n >= 3) return { mid:'#b48868', dark:'#624330', alpha:.96 };
-      return { mid:'#a97b5d', dark:'#54392a', alpha:.94 };
+      if(n >= 6) return { core:'#c29a7a', dark:'#6d4b36' };
+      if(n >= 3) return { core:'#b48868', dark:'#624330' };
+      return { core:'#a97b5d', dark:'#54392a' };
     }
 
-    function getNeighbors(r, c){
-      const dirs = [
-        [-1,0],[1,0],[0,-1],[0,1],
-        [-1,-1],[-1,1],[1,-1],[1,1]
-      ];
-      return dirs.filter(([dr,dc]) => inBounds(r+dr, c+dc) && isFilled(r+dr, c+dc));
-    }
+    function getWoodShape(r, c){
+      const up = inBounds(r - 1, c) && isFilled(r - 1, c);
+      const down = inBounds(r + 1, c) && isFilled(r + 1, c);
+      const left = inBounds(r, c - 1) && isFilled(r, c - 1);
+      const right = inBounds(r, c + 1) && isFilled(r, c + 1);
+      const ul = inBounds(r - 1, c - 1) && isFilled(r - 1, c - 1);
+      const ur = inBounds(r - 1, c + 1) && isFilled(r - 1, c + 1);
+      const dl = inBounds(r + 1, c - 1) && isFilled(r + 1, c - 1);
+      const dr = inBounds(r + 1, c + 1) && isFilled(r + 1, c + 1);
+      const n = neighborCount(r, c);
 
-    function getBrushStrokeData(r, c){
-      const neighbors = getNeighbors(r, c);
-      if(!neighbors.length){
-        return {
-          angle: -90,
-          len: 62,
-          thick: 22,
-          secondaryAngle: null,
-          secondaryLen: 0,
-          secondaryThick: 0,
-          secondaryOpacity: 0
-        };
-      }
+      let coreW = 86;
+      let coreH = 86;
+      if(n >= 6){ coreW = 98; coreH = 98; }
+      else if(n >= 4){ coreW = 94; coreH = 94; }
+      else if(n === 3){ coreW = 90; coreH = 90; }
+      else if(n <= 1){ coreW = 70; coreH = 70; }
 
-      let vx = 0, vy = 0;
-      for(const [dr, dc] of neighbors){
-        vx += dc;
-        vy += dr;
-      }
-
-      let angle = Math.atan2(vy, vx) * (180 / Math.PI);
-      if(!isFinite(angle)) angle = -90;
-
-      const n = neighbors.length;
-      let len = 64;
-      let thick = 18;
-
-      if(n >= 6){ len = 96; thick = 34; }
-      else if(n >= 4){ len = 88; thick = 28; }
-      else if(n === 3){ len = 78; thick = 23; }
-      else if(n === 2){ len = 72; thick = 18; }
-      else { len = 58; thick = 14; }
-
-      const aligned = neighbors.filter(([dr, dc]) => {
-        const a = Math.atan2(dr, dc) * (180 / Math.PI);
-        let diff = Math.abs(a - angle) % 180;
-        if(diff > 90) diff = 180 - diff;
-        return diff < 24;
-      }).length;
-
-      let secondaryAngle = null;
-      let secondaryLen = 0;
-      let secondaryThick = 0;
-      let secondaryOpacity = 0;
-
-      if(n >= 3 && aligned < n){
-        const candidates = neighbors.map(([dr, dc]) => Math.atan2(dr, dc) * (180 / Math.PI));
-        let best = null;
-        let bestDiff = -1;
-        for(const a of candidates){
-          let diff = Math.abs(a - angle) % 180;
-          if(diff > 90) diff = 180 - diff;
-          if(diff > bestDiff){
-            bestDiff = diff;
-            best = a;
-          }
-        }
-        if(best !== null && bestDiff > 22){
-          secondaryAngle = best;
-          secondaryLen = Math.max(36, len * 0.66);
-          secondaryThick = Math.max(12, thick * 0.72);
-          secondaryOpacity = 0.84;
-        }
-      }
-
-      return {
-        angle, len, thick,
-        secondaryAngle, secondaryLen, secondaryThick, secondaryOpacity
-      };
+      return { up, down, left, right, ul, ur, dl, dr, coreW, coreH };
     }
 
     function leafAppearance(r, c){
-      const seed = ((r * 17) + (c * 29)) % 11;
-      const sprayRot = [-28, -18, -8, 0, 8, 14, 22, 30, -22, 12, 4][seed];
-      const layouts = [
-        [[34,48,28,14,-26],[54,36,30,15,16],[63,58,24,13,42]],
-        [[38,40,30,15,-18],[58,44,28,14,8],[49,62,22,12,54]],
-        [[42,34,30,14,-8],[58,48,28,15,18],[32,60,22,12,70]],
-        [[36,44,28,14,-22],[52,34,28,14,10],[62,54,24,12,38]],
-        [[40,38,30,14,-12],[56,46,30,15,22],[46,60,24,12,62]],
-        [[34,52,28,14,-30],[54,40,28,14,6],[65,56,24,12,36]],
-        [[44,36,30,14,-6],[60,48,28,15,26],[36,62,24,12,76]],
-        [[38,46,28,14,-18],[56,34,28,14,14],[61,58,24,12,46]],
-        [[40,34,30,14,-8],[58,44,30,15,18],[42,60,24,12,68]],
-        [[36,40,28,14,-20],[54,50,28,14,20],[62,40,24,12,52]],
-        [[42,44,30,14,-10],[60,38,28,14,12],[46,62,24,12,60]]
-      ];
-      return { sprayRot, dabs: layouts[seed] };
+      const nearbyLeaves = [
+        isLeaf(r - 1, c), isLeaf(r + 1, c), isLeaf(r, c - 1), isLeaf(r, c + 1),
+        isLeaf(r - 1, c - 1), isLeaf(r - 1, c + 1), isLeaf(r + 1, c - 1), isLeaf(r + 1, c + 1)
+      ].filter(Boolean).length;
+
+      let size = 78;
+      if(nearbyLeaves >= 4) size = 96;
+      else if(nearbyLeaves >= 2) size = 88;
+
+      return { size };
     }
 
     function render(){
@@ -1133,67 +1022,51 @@
           const cell = cells[r][c];
           cell.className = 'cell';
           cell.innerHTML = '';
-          cell.style.removeProperty('--tip-rot');
 
           if(isFilled(r,c)){
             cell.classList.add('filled');
             const color = woodColor(r,c);
-            const brush = getBrushStrokeData(r,c);
+            const shape = getWoodShape(r,c);
 
-            const main = document.createElement('div');
-            main.className = 'brush-main';
-            main.style.setProperty('--brush-rot', `${brush.angle}deg`);
-            main.style.setProperty('--brush-len', `${brush.len}%`);
-            main.style.setProperty('--brush-thick', `${brush.thick}%`);
-            main.style.background = `linear-gradient(90deg,
-              rgba(0,0,0,0) 0%,
-              ${color.dark}dd 18%,
-              ${color.mid} 48%,
-              ${color.dark}d4 80%,
-              rgba(0,0,0,0) 100%)`;
-            main.style.opacity = String(color.alpha);
-            cell.appendChild(main);
+            const core = document.createElement('div');
+            core.className = 'mosaic-core';
+            core.style.setProperty('--core-w', `${shape.coreW}%`);
+            core.style.setProperty('--core-h', `${shape.coreH}%`);
+            core.style.background = `linear-gradient(180deg, ${color.core}, ${color.dark})`;
+            cell.appendChild(core);
 
-            if(brush.secondaryAngle !== null){
-              const secondary = document.createElement('div');
-              secondary.className = 'brush-secondary';
-              secondary.style.setProperty('--brush2-rot', `${brush.secondaryAngle}deg`);
-              secondary.style.setProperty('--brush2-len', `${brush.secondaryLen}%`);
-              secondary.style.setProperty('--brush2-thick', `${brush.secondaryThick}%`);
-              secondary.style.setProperty('--brush2-opacity', String(brush.secondaryOpacity));
-              secondary.style.background = `linear-gradient(90deg,
-                rgba(0,0,0,0) 0%,
-                ${color.dark}b8 20%,
-                ${color.mid}cc 50%,
-                ${color.dark}b0 82%,
-                rgba(0,0,0,0) 100%)`;
-              cell.appendChild(secondary);
-            }
+            const linkIf = (cond, w, h, x, y) => {
+              if(!cond) return;
+              const link = document.createElement('div');
+              link.className = 'mosaic-link';
+              link.style.setProperty('--link-w', w);
+              link.style.setProperty('--link-h', h);
+              link.style.left = x;
+              link.style.top = y;
+              link.style.transform = 'translate(-50%, -50%)';
+              link.style.background = `linear-gradient(180deg, ${color.core}ee, ${color.dark}f0)`;
+              cell.appendChild(link);
+            };
 
-            if(isTip(r,c) && r < ROWS - 2){
-              cell.classList.add('tip');
-              cell.style.setProperty('--tip-rot', `${brush.angle}deg`);
-            }
+            linkIf(shape.up, '44%', '100%', '50%', '26%');
+            linkIf(shape.down, '44%', '100%', '50%', '74%');
+            linkIf(shape.left, '100%', '44%', '26%', '50%');
+            linkIf(shape.right, '100%', '44%', '74%', '50%');
+
+            linkIf(shape.ul && !shape.up && !shape.left, '64%', '64%', '32%', '32%');
+            linkIf(shape.ur && !shape.up && !shape.right, '64%', '64%', '68%', '32%');
+            linkIf(shape.dl && !shape.down && !shape.left, '64%', '64%', '32%', '68%');
+            linkIf(shape.dr && !shape.down && !shape.right, '64%', '64%', '68%', '68%');
+
+            if(isTip(r,c) && r < ROWS - 2) cell.classList.add('tip');
           } else if(isLeaf(r,c)){
             cell.classList.add('leafed');
-            const sprayData = leafAppearance(r,c);
-            const spray = document.createElement('div');
-            spray.className = 'leaf-spray';
-            spray.style.setProperty('--spray-rot', `${sprayData.sprayRot}deg`);
-
-            sprayData.dabs.forEach(([left, top, w, h, rot], idx) => {
-              const dab = document.createElement('div');
-              dab.className = 'leaf-dab';
-              dab.style.left = `${left}%`;
-              dab.style.top = `${top}%`;
-              dab.style.setProperty('--dab-w', `${w}%`);
-              dab.style.setProperty('--dab-h', `${h}%`);
-              dab.style.setProperty('--dab-rot', `${rot}deg`);
-              dab.style.opacity = String(0.82 + (idx * 0.06));
-              spray.appendChild(dab);
-            });
-
-            cell.appendChild(spray);
+            const leafLook = leafAppearance(r,c);
+            const leaf = document.createElement('div');
+            leaf.className = 'mosaic-leaf';
+            leaf.style.setProperty('--leaf-block-w', `${leafLook.size}%`);
+            leaf.style.setProperty('--leaf-block-h', `${leafLook.size}%`);
+            cell.appendChild(leaf);
           }
         }
       }
