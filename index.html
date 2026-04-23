@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>Tree v4.5 Wood Styles</title>
+  <title>Tree v4.6 Wood Variation</title>
   <style>
     :root{
       --text:#efe5d2;
@@ -1042,32 +1042,44 @@
     function woodColor(r, c){
       const styles = {
         oak: {
-          dense: 'linear-gradient(180deg, #a98a73, #705847)',
-          mid: 'linear-gradient(180deg, #987963, #624c3d)',
-          thin: 'linear-gradient(180deg, #856a57, #564135)'
+          base: ['#a5846c', '#8d6f5b', '#735847'],
+          light: ['#b99a82', '#9f816d', '#826756'],
+          dark: ['#8d705d', '#765b4b', '#5e473a']
         },
         walnut: {
-          dense: 'linear-gradient(180deg, #8a6a5a, #574033)',
-          mid: 'linear-gradient(180deg, #795c4e, #4c382d)',
-          thin: 'linear-gradient(180deg, #684f44, #3f2f26)'
+          base: ['#85685a', '#6f5549', '#59443a'],
+          light: ['#997a6b', '#82665a', '#694f45'],
+          dark: ['#71574b', '#5d483e', '#49372f']
         },
         ash: {
-          dense: 'linear-gradient(180deg, #999289, #666059)',
-          mid: 'linear-gradient(180deg, #898179, #5a544e)',
-          thin: 'linear-gradient(180deg, #77706a, #4d4742)'
+          base: ['#969087', '#7f7971', '#68635d'],
+          light: ['#a6a097', '#8f8880', '#77726c'],
+          dark: ['#807a72', '#6a655e', '#55514b']
         },
         cedar: {
-          dense: 'linear-gradient(180deg, #a47a69, #6b4a3d)',
-          mid: 'linear-gradient(180deg, #956e5e, #603f34)',
-          thin: 'linear-gradient(180deg, #856152, #53372d)'
+          base: ['#9b7565', '#855f51', '#6d4c40'],
+          light: ['#ad8574', '#966a5b', '#7e584a'],
+          dark: ['#856355', '#704f44', '#5b4036']
         }
       };
 
       const palette = styles[woodStyle] || styles.oak;
-      const n = neighborCount(r,c);
-      if(n >= 6) return palette.dense;
-      if(n >= 3) return palette.mid;
-      return palette.thin;
+      const n = neighborCount(r, c);
+
+      // Very gentle directional / natural variation.
+      // columnBand gives a slight "flow" along branches/trunks,
+      // while rowMix/seedMix break uniform flatness.
+      const columnBand = (((c % 6) + 6) % 6);
+      const rowMix = (((r % 5) + 5) % 5);
+      const seedMix = (((r * 17 + c * 31) % 9) + 9) % 9;
+
+      let variant = 1; // mid by default
+      if (columnBand === 0 || columnBand === 1 || seedMix === 0) variant = 0; // lighter
+      if (columnBand === 4 || columnBand === 5 || rowMix === 0 || seedMix === 8) variant = 2; // darker
+
+      if (n >= 6) return `linear-gradient(180deg, ${palette.light[variant]}, ${palette.base[variant]})`;
+      if (n >= 3) return `linear-gradient(180deg, ${palette.base[variant]}, ${palette.dark[variant]})`;
+      return `linear-gradient(180deg, ${palette.light[variant]}, ${palette.dark[variant]})`;
     }
 
     function getWoodShape(r, c){
