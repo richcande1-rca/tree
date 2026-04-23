@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>Tree v4.6 Wood Variation</title>
+  <title>Tree v4.7 Leaf Refine</title>
   <style>
     :root{
       --text:#efe5d2;
@@ -564,19 +564,32 @@
     .diag.ur{ transform:translate(-28%, -72%) rotate(45deg); }
     .diag.dl{ transform:translate(-72%, -28%) rotate(45deg); }
     .diag.dr{ transform:translate(-28%, -28%) rotate(-45deg); }
-
     .leaf{
       position:absolute;
       left:50%;
       top:50%;
-      width:var(--leaf-w, 60%);
-      height:var(--leaf-h, 60%);
+      width:var(--leaf-w, 62%);
+      height:var(--leaf-h, 62%);
       transform:translate(-50%, -50%) rotate(var(--leaf-rot, 0deg));
-      border-radius:62% 38% 58% 42% / 48% 62% 38% 52%;
-      background:var(--leaf-fill, linear-gradient(180deg, #b5ebb5, #6eab6e));
+      border-radius:66% 34% 62% 38% / 46% 60% 40% 54%;
+      background:var(--leaf-fill, linear-gradient(180deg, #b8e7b6, #6f9f69));
       box-shadow:
-        inset 0 1px 0 rgba(255,255,255,.16),
-        0 2px 6px rgba(41,73,39,.24);
+        inset 0 1px 0 rgba(255,255,255,.12),
+        0 1px 4px rgba(34,56,30,.18);
+      pointer-events:none;
+    }
+
+    .leaf::after{
+      content:"";
+      position:absolute;
+      left:22%;
+      top:18%;
+      width:48%;
+      height:28%;
+      border-radius:999px;
+      transform:rotate(-18deg);
+      background:linear-gradient(180deg, rgba(255,255,255,.16), rgba(255,255,255,0));
+      opacity:.55;
       pointer-events:none;
     }
 
@@ -1141,18 +1154,22 @@
         isLeaf(r - 1, c), isLeaf(r + 1, c), isLeaf(r, c - 1), isLeaf(r, c + 1),
         isLeaf(r - 1, c - 1), isLeaf(r - 1, c + 1), isLeaf(r + 1, c - 1), isLeaf(r + 1, c + 1)
       ].filter(Boolean).length;
-      const seed = ((r * 17) + (c * 29)) % 5;
-      const widths = [54, 58, 62, 56, 60];
-      const heights = [50, 56, 60, 54, 58];
-      const rotations = [-18, -8, 0, 10, 18];
+
+      const seed = ((r * 17) + (c * 29)) % 6;
+      const widths = [58, 62, 66, 60, 64, 68];
+      const heights = [52, 56, 58, 54, 57, 60];
+      const rotations = [-16, -8, 0, 8, 14, 20];
       const fills = [
-        'linear-gradient(180deg, #b9efb9, #72b172)',
-        'linear-gradient(180deg, #c2f5b8, #7fbc70)',
-        'linear-gradient(180deg, #b4ecaa, #69a965)',
-        'linear-gradient(180deg, #c9f2bf, #7ab777)',
-        'linear-gradient(180deg, #b7e8b7, #74ad74)'
+        'linear-gradient(180deg, #c1efb9, #7cab70)',
+        'linear-gradient(180deg, #b9e6b0, #6d9a63)',
+        'linear-gradient(180deg, #c8f1bc, #85b777)',
+        'linear-gradient(180deg, #b5dfad, #6a9460)',
+        'linear-gradient(180deg, #c3ebba, #79a96f)',
+        'linear-gradient(180deg, #bde3b3, #729d67)'
       ];
-      const sizeBoost = Math.min(8, nearbyLeaves * 2);
+
+      const sizeBoost = Math.min(6, nearbyLeaves * 1.5);
+
       return {
         w: widths[seed] + sizeBoost,
         h: heights[seed] + sizeBoost,
