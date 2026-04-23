@@ -3,21 +3,17 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>Tree v4.1 Bonsai Atelier</title>
+  <title>Tree v4.4 Layout Kept / Old Brush Return</title>
   <style>
     :root{
       --text:#efe5d2;
       --muted:#c6b59a;
       --muted-soft:#9e8e75;
       --gold:#c6a166;
-      --wood-light:#7b5537;
-      --wood-mid:#5a3b24;
-      --wood-dark:#2f1d12;
+      --wood-light:#6f4c2d;
+      --wood-mid:#4c311d;
+      --wood-dark:#25170f;
       --wood-black:#130c08;
-      --bark-highlight:#c89e79;
-      --bark-mid:#9b6d49;
-      --bark-shadow:#5d3b24;
-      --bark-deep:#2a170d;
       --grid:rgba(245,236,216,.040);
       --cell-size:7px;
       --computed-cell-size: var(--cell-size);
@@ -510,114 +506,85 @@
       background:transparent;
       box-shadow:none;
     }
-    .mosaic-core,
-    .mosaic-link,
-    .mosaic-leaf{
+
+    .wood,
+    .conn,
+    .diag{
+      position:absolute;
+      background:var(--wood-fill);
+      border-radius:999px;
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,.10),
+        0 2px 6px rgba(0,0,0,.20);
+      pointer-events:none;
+    }
+
+    .wood{
+      left:50%;
+      top:50%;
+      width:var(--wood-w, 72%);
+      height:var(--wood-h, 72%);
+      transform:translate(-50%, -50%);
+    }
+
+    .conn.up, .conn.down{
+      left:50%;
+      width:var(--conn-vw, 54%);
+      height:58%;
+      transform:translateX(-50%);
+    }
+    .conn.up{ top:0; }
+    .conn.down{ bottom:0; }
+
+    .conn.left, .conn.right{
+      top:50%;
+      width:58%;
+      height:var(--conn-hh, 54%);
+      transform:translateY(-50%);
+    }
+    .conn.left{ left:0; }
+    .conn.right{ right:0; }
+
+    .diag{
+      width:28%;
+      height:66%;
+      left:50%;
+      top:50%;
+      transform-origin:center;
+      opacity:.98;
+    }
+    .diag.ul{ transform:translate(-72%, -72%) rotate(-45deg); }
+    .diag.ur{ transform:translate(-28%, -72%) rotate(45deg); }
+    .diag.dl{ transform:translate(-72%, -28%) rotate(45deg); }
+    .diag.dr{ transform:translate(-28%, -28%) rotate(-45deg); }
+
+    .leaf{
       position:absolute;
       left:50%;
       top:50%;
-      transform:translate(-50%, -50%);
-      pointer-events:none;
-    }
-
-    .mosaic-core{
-      width:var(--core-w, 96%);
-      height:var(--core-h, 96%);
-      border-radius:2px;
-      background:
-        linear-gradient(180deg,
-          var(--bark-hi, #c89e79) 0%,
-          var(--bark-mid, #9b6d49) 24%,
-          var(--bark-shadow, #5d3b24) 78%,
-          var(--bark-deep, #2a170d) 100%);
+      width:var(--leaf-w, 60%);
+      height:var(--leaf-h, 60%);
+      transform:translate(-50%, -50%) rotate(var(--leaf-rot, 0deg));
+      border-radius:62% 38% 58% 42% / 48% 62% 38% 52%;
+      background:var(--leaf-fill, linear-gradient(180deg, #b5ebb5, #6eab6e));
       box-shadow:
-        inset 0 1px 0 rgba(255,232,205,.10),
-        inset 1px 0 0 rgba(255,219,184,.05),
-        inset -1px 0 0 rgba(31,18,11,.18),
-        0 0 0 1px rgba(37,21,12,.14);
-      overflow:hidden;
-    }
-
-    .mosaic-core::before{
-      content:"";
-      position:absolute;
-      inset:0;
-      background:
-        repeating-linear-gradient(180deg,
-          rgba(255,232,205,.045) 0 1px,
-          rgba(0,0,0,0) 1px 3px,
-          rgba(58,34,20,.08) 3px 4px,
-          rgba(0,0,0,0) 4px 7px
-        );
-      opacity:.95;
-      mix-blend-mode:overlay;
+        inset 0 1px 0 rgba(255,255,255,.16),
+        0 2px 6px rgba(41,73,39,.24);
       pointer-events:none;
-    }
-
-    .mosaic-core::after{
-      content:"";
-      position:absolute;
-      inset:0;
-      background:
-        linear-gradient(90deg,
-          rgba(255,224,188,.07) 0%,
-          rgba(0,0,0,0) 30%,
-          rgba(0,0,0,0) 70%,
-          rgba(32,18,10,.14) 100%);
-      pointer-events:none;
-    }
-
-    .mosaic-link{
-      width:var(--link-w, 100%);
-      height:var(--link-h, 100%);
-      border-radius:1px;
-      background:
-        linear-gradient(180deg,
-          var(--bark-hi, #c89e79) 0%,
-          var(--bark-mid, #9b6d49) 26%,
-          var(--bark-shadow, #5d3b24) 80%,
-          var(--bark-deep, #2a170d) 100%);
-      box-shadow:
-        inset 0 1px 0 rgba(255,232,205,.07),
-        0 0 0 1px rgba(37,21,12,.10);
-      overflow:hidden;
-      opacity:.98;
-    }
-
-    .mosaic-link::before{
-      content:"";
-      position:absolute;
-      inset:0;
-      background:
-        repeating-linear-gradient(180deg,
-          rgba(255,229,197,.035) 0 1px,
-          rgba(0,0,0,0) 1px 3px,
-          rgba(49,30,18,.07) 3px 4px,
-          rgba(0,0,0,0) 4px 7px
-        );
-      mix-blend-mode:overlay;
-      pointer-events:none;
-    }
-
-    .mosaic-leaf{
-      width:var(--leaf-block-w, 88%);
-      height:var(--leaf-block-h, 88%);
-      border-radius:2px;
-      background:
-        linear-gradient(180deg, rgba(192,226,168,.95), rgba(104,145,82,.98));
-      box-shadow:
-        inset 0 1px 0 rgba(236,255,226,.10),
-        0 0 0 1px rgba(43,72,37,.12);
     }
 
     .tip::after{
       pointer-events:none;
       content:"";
       position:absolute;
-      inset:28%;
+      width:5px;
+      height:5px;
+      top:-1px;
+      left:50%;
+      transform:translateX(-50%) rotate(45deg);
       border-radius:1px;
-      background:linear-gradient(180deg, rgba(199,232,176,.86), rgba(112,155,90,.90));
-      opacity:.68;
+      background:linear-gradient(180deg, #bfd8a8, #6e8d59);
+      box-shadow:0 0 6px rgba(113,181,111,.28);
     }
 
     .status-line{
@@ -899,7 +866,7 @@
     }
 
     function getBrushOffsets(size){
-      const radiusMap = { 1: 0, 2: 0.9, 3: 1.3, 4: 1.8, 5: 2.3, 6: 2.85 };
+      const radiusMap = { 1: 0, 2: 1.05, 3: 1.45, 4: 1.9, 5: 2.35, 6: 2.85 };
       const radius = radiusMap[size];
       const offsets = [];
 
@@ -1042,28 +1009,9 @@
 
     function woodColor(r, c){
       const n = neighborCount(r,c);
-      if(n >= 6){
-        return {
-          hi:'#d3ac88',
-          mid:'#a77752',
-          shadow:'#684229',
-          deep:'#2f1a0f'
-        };
-      }
-      if(n >= 3){
-        return {
-          hi:'#c89e79',
-          mid:'#986947',
-          shadow:'#5e3b24',
-          deep:'#29170d'
-        };
-      }
-      return {
-        hi:'#bc906d',
-        mid:'#8d603f',
-        shadow:'#55341f',
-        deep:'#24140c'
-      };
+      if(n >= 6) return 'linear-gradient(180deg, #8f6d57, #654838)';
+      if(n >= 3) return 'linear-gradient(180deg, #7f604c, #5a4032)';
+      return 'linear-gradient(180deg, #6f5545, #4b352a)';
     }
 
     function getWoodShape(r, c){
@@ -1076,15 +1024,48 @@
       const dl = inBounds(r + 1, c - 1) && isFilled(r + 1, c - 1);
       const dr = inBounds(r + 1, c + 1) && isFilled(r + 1, c + 1);
       const n = neighborCount(r, c);
+      const vertical = up || down;
+      const horizontal = left || right;
 
-      let coreW = 86;
-      let coreH = 86;
-      if(n >= 6){ coreW = 98; coreH = 98; }
-      else if(n >= 4){ coreW = 94; coreH = 94; }
-      else if(n === 3){ coreW = 90; coreH = 90; }
-      else if(n <= 1){ coreW = 70; coreH = 70; }
+      let w = 72;
+      let h = 72;
 
-      return { up, down, left, right, ul, ur, dl, dr, coreW, coreH };
+      if(n >= 6){ w = 94; h = 94; }
+      else if(n >= 4){ w = 86; h = 86; }
+      else if(n === 3){ w = 80; h = 80; }
+      else if(n <= 1){ w = 56; h = 56; }
+      else { w = 68; h = 68; }
+
+      if(vertical && !horizontal){
+        w = Math.max(46, w - 12);
+        h = Math.min(96, h + 14);
+      } else if(horizontal && !vertical){
+        h = Math.max(46, h - 12);
+        w = Math.min(96, w + 14);
+      } else if(vertical && horizontal){
+        w = Math.min(96, w + 4);
+        h = Math.min(96, h + 4);
+      }
+
+      return {
+        n, up, down, left, right, ul, ur, dl, dr, w, h,
+        connVW: Math.max(34, Math.min(82, w - 10)),
+        connHH: Math.max(34, Math.min(82, h - 10))
+      };
+    }
+
+    function addConnector(cell, dir, shape){
+      const conn = document.createElement('div');
+      conn.className = `conn ${dir}`;
+      conn.style.setProperty('--conn-vw', `${shape.connVW}%`);
+      conn.style.setProperty('--conn-hh', `${shape.connHH}%`);
+      cell.appendChild(conn);
+    }
+
+    function addDiag(cell, dir){
+      const diag = document.createElement('div');
+      diag.className = `diag ${dir}`;
+      cell.appendChild(diag);
     }
 
     function leafAppearance(r, c){
@@ -1092,12 +1073,24 @@
         isLeaf(r - 1, c), isLeaf(r + 1, c), isLeaf(r, c - 1), isLeaf(r, c + 1),
         isLeaf(r - 1, c - 1), isLeaf(r - 1, c + 1), isLeaf(r + 1, c - 1), isLeaf(r + 1, c + 1)
       ].filter(Boolean).length;
-
-      let size = 78;
-      if(nearbyLeaves >= 4) size = 96;
-      else if(nearbyLeaves >= 2) size = 88;
-
-      return { size };
+      const seed = ((r * 17) + (c * 29)) % 5;
+      const widths = [54, 58, 62, 56, 60];
+      const heights = [50, 56, 60, 54, 58];
+      const rotations = [-18, -8, 0, 10, 18];
+      const fills = [
+        'linear-gradient(180deg, #b9efb9, #72b172)',
+        'linear-gradient(180deg, #c2f5b8, #7fbc70)',
+        'linear-gradient(180deg, #b4ecaa, #69a965)',
+        'linear-gradient(180deg, #c9f2bf, #7ab777)',
+        'linear-gradient(180deg, #b7e8b7, #74ad74)'
+      ];
+      const sizeBoost = Math.min(8, nearbyLeaves * 2);
+      return {
+        w: widths[seed] + sizeBoost,
+        h: heights[seed] + sizeBoost,
+        rot: rotations[seed],
+        fill: fills[seed]
+      };
     }
 
     function render(){
@@ -1106,60 +1099,47 @@
           const cell = cells[r][c];
           cell.className = 'cell';
           cell.innerHTML = '';
+          cell.style.removeProperty('--wood-fill');
+          cell.style.removeProperty('--leaf-fill');
 
           if(isFilled(r,c)){
             cell.classList.add('filled');
             const color = woodColor(r,c);
             const shape = getWoodShape(r,c);
+            cell.style.setProperty('--wood-fill', color);
 
-            const core = document.createElement('div');
-            core.className = 'mosaic-core';
-            core.style.setProperty('--core-w', `${shape.coreW}%`);
-            core.style.setProperty('--core-h', `${shape.coreH}%`);
-            core.style.setProperty('--bark-hi', color.hi);
-            core.style.setProperty('--bark-mid', color.mid);
-            core.style.setProperty('--bark-shadow', color.shadow);
-            core.style.setProperty('--bark-deep', color.deep);
-            cell.appendChild(core);
+            const wood = document.createElement('div');
+            wood.className = 'wood';
+            wood.style.setProperty('--wood-w', `${shape.w}%`);
+            wood.style.setProperty('--wood-h', `${shape.h}%`);
+            cell.appendChild(wood);
 
-            const linkIf = (cond, w, h, x, y) => {
-              if(!cond) return;
-              const link = document.createElement('div');
-              link.className = 'mosaic-link';
-              link.style.setProperty('--link-w', w);
-              link.style.setProperty('--link-h', h);
-              link.style.left = x;
-              link.style.top = y;
-              link.style.transform = 'translate(-50%, -50%)';
-              link.style.setProperty('--bark-hi', color.hi);
-              link.style.setProperty('--bark-mid', color.mid);
-              link.style.setProperty('--bark-shadow', color.shadow);
-              link.style.setProperty('--bark-deep', color.deep);
-              cell.appendChild(link);
-            };
+            if(shape.up) addConnector(cell, 'up', shape);
+            if(shape.down) addConnector(cell, 'down', shape);
+            if(shape.left) addConnector(cell, 'left', shape);
+            if(shape.right) addConnector(cell, 'right', shape);
 
-            linkIf(shape.up, '44%', '100%', '50%', '26%');
-            linkIf(shape.down, '44%', '100%', '50%', '74%');
-            linkIf(shape.left, '100%', '44%', '26%', '50%');
-            linkIf(shape.right, '100%', '44%', '74%', '50%');
-
-            linkIf(shape.ul && !shape.up && !shape.left, '64%', '64%', '32%', '32%');
-            linkIf(shape.ur && !shape.up && !shape.right, '64%', '64%', '68%', '32%');
-            linkIf(shape.dl && !shape.down && !shape.left, '64%', '64%', '32%', '68%');
-            linkIf(shape.dr && !shape.down && !shape.right, '64%', '64%', '68%', '68%');
+            if(shape.ul && !shape.up && !shape.left) addDiag(cell, 'ul');
+            if(shape.ur && !shape.up && !shape.right) addDiag(cell, 'ur');
+            if(shape.dl && !shape.down && !shape.left) addDiag(cell, 'dl');
+            if(shape.dr && !shape.down && !shape.right) addDiag(cell, 'dr');
 
             if(isTip(r,c) && r < ROWS - 2) cell.classList.add('tip');
           } else if(isLeaf(r,c)){
             cell.classList.add('leafed');
             const leafLook = leafAppearance(r,c);
             const leaf = document.createElement('div');
-            leaf.className = 'mosaic-leaf';
-            leaf.style.setProperty('--leaf-block-w', `${leafLook.size}%`);
-            leaf.style.setProperty('--leaf-block-h', `${leafLook.size}%`);
+            leaf.className = 'leaf';
+            leaf.style.setProperty('--leaf-w', `${leafLook.w}%`);
+            leaf.style.setProperty('--leaf-h', `${leafLook.h}%`);
+            leaf.style.setProperty('--leaf-rot', `${leafLook.rot}deg`);
+            leaf.style.setProperty('--leaf-fill', leafLook.fill);
             cell.appendChild(leaf);
           }
         }
       }
+      filledCountEl.textContent = String(filled.size);
+      leafCountEl.textContent = String(leaves.size);
     }
 
     function getMetrics(){
