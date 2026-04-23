@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>Tree v4.7 Performance Pass</title>
+  <title>Tree v4.7 Leaf Blend</title>
   <style>
     :root{
       --text:#efe5d2;
@@ -506,7 +506,6 @@
       background:var(--grid);
       position:relative;
       box-shadow: inset 0 0 0 1px rgba(255,255,255,.006);
-      contain: layout paint style;
     }
 
     .cell.filled,
@@ -575,8 +574,8 @@
       border-radius:66% 34% 62% 38% / 46% 60% 40% 54%;
       background:var(--leaf-fill, linear-gradient(180deg, #b8e7b6, #6f9f69));
       box-shadow:
-        inset 0 1px 0 rgba(255,255,255,.12),
-        0 1px 4px rgba(34,56,30,.18);
+        inset 0 1px 0 rgba(255,255,255,.10),
+        0 1px 4px rgba(28,48,25,.16);
       pointer-events:none;
     }
 
@@ -589,8 +588,8 @@
       height:28%;
       border-radius:999px;
       transform:rotate(-18deg);
-      background:linear-gradient(180deg, rgba(255,255,255,.16), rgba(255,255,255,0));
-      opacity:.55;
+      background:linear-gradient(180deg, rgba(255,255,255,.14), rgba(255,255,255,0));
+      opacity:.48;
       pointer-events:none;
     }
 
@@ -864,105 +863,11 @@
     let isPointerDown = false;
     let lastPaintKey = null;
     let drawEnabled = true;
-    let dirtyCells = new Set();
-    let renderScheduled = false;
-    let readingScheduled = false;
 
     function key(r, c){ return `${r},${c}`; }
     function inBounds(r, c){ return r >= 0 && r < ROWS && c >= 0 && c < COLS; }
     function isFilled(r, c){ return filled.has(key(r,c)); }
     function isLeaf(r, c){ return leaves.has(key(r,c)); }
-    function markDirty(r, c){
-      if(inBounds(r, c)) dirtyCells.add(key(r, c));
-    }
-
-    function markNeighborsDirty(r, c){
-      for(let dr = -1; dr <= 1; dr++){
-        for(let dc = -1; dc <= 1; dc++){
-          markDirty(r + dr, c + dc);
-        }
-      }
-    }
-
-    function scheduleRender(){
-      if(renderScheduled) return;
-      renderScheduled = true;
-      requestAnimationFrame(() => {
-        renderScheduled = false;
-        renderDirty();
-      });
-    }
-
-    function scheduleReadingUpdate(){
-      if(readingScheduled) return;
-      readingScheduled = true;
-      requestAnimationFrame(() => {
-        readingScheduled = false;
-        updateReading();
-      });
-    }
-
-    function renderCell(r, c){
-      const cell = cells[r][c];
-      cell.className = 'cell';
-      cell.innerHTML = '';
-      cell.style.removeProperty('--wood-fill');
-      cell.style.removeProperty('--leaf-fill');
-
-      if(isFilled(r,c)){
-        cell.classList.add('filled');
-        const color = woodColor(r,c);
-        const shape = getWoodShape(r,c);
-        cell.style.setProperty('--wood-fill', color);
-
-        const wood = document.createElement('div');
-        wood.className = 'wood';
-        wood.style.setProperty('--wood-w', `${shape.w}%`);
-        wood.style.setProperty('--wood-h', `${shape.h}%`);
-        cell.appendChild(wood);
-
-        if(shape.up) addConnector(cell, 'up', shape);
-        if(shape.down) addConnector(cell, 'down', shape);
-        if(shape.left) addConnector(cell, 'left', shape);
-        if(shape.right) addConnector(cell, 'right', shape);
-
-        if(shape.ul && !shape.up && !shape.left) addDiag(cell, 'ul');
-        if(shape.ur && !shape.up && !shape.right) addDiag(cell, 'ur');
-        if(shape.dl && !shape.down && !shape.left) addDiag(cell, 'dl');
-        if(shape.dr && !shape.down && !shape.right) addDiag(cell, 'dr');
-
-        if(isTip(r,c) && r < ROWS - 2) cell.classList.add('tip');
-      } else if(isLeaf(r,c)){
-        cell.classList.add('leafed');
-        const leafLook = leafAppearance(r,c);
-        const leaf = document.createElement('div');
-        leaf.className = 'leaf';
-        leaf.style.setProperty('--leaf-w', `${leafLook.w}%`);
-        leaf.style.setProperty('--leaf-h', `${leafLook.h}%`);
-        leaf.style.setProperty('--leaf-rot', `${leafLook.rot}deg`);
-        leaf.style.setProperty('--leaf-fill', leafLook.fill);
-        cell.appendChild(leaf);
-      }
-    }
-
-    function renderDirty(forceAll = false){
-      if(forceAll){
-        for(let r = 0; r < ROWS; r++){
-          for(let c = 0; c < COLS; c++){
-            renderCell(r, c);
-          }
-        }
-        return;
-      }
-
-      if(!dirtyCells.size) return;
-      const pending = [...dirtyCells];
-      dirtyCells.clear();
-      for(const k of pending){
-        const [r, c] = k.split(',').map(Number);
-        renderCell(r, c);
-      }
-    }
 
     function createGrid(){
       gridEl.style.gridTemplateColumns = `repeat(${COLS}, var(--computed-cell-size))`;
@@ -1036,8 +941,6 @@
       lastPaintKey = `${mode}:${brushSize}:${k}`;
 
       const offsets = getBrushOffsets(brushSize);
-      let changed = false;
-
       for(const [dr, dc] of offsets){
         const rr = r + dr;
         const cc = c + dc;
@@ -1045,36 +948,18 @@
         const cellKey = key(rr, cc);
 
         if(mode === 'wood'){
-          const hadFill = filled.has(cellKey);
-          const hadLeaf = leaves.has(cellKey);
           filled.add(cellKey);
           leaves.delete(cellKey);
-          if(!hadFill || hadLeaf){
-            changed = true;
-            markNeighborsDirty(rr, cc);
-          }
         } else if(mode === 'leaf'){
-          if(canPlaceLeaf(rr, cc) && !leaves.has(cellKey)){
-            leaves.add(cellKey);
-            changed = true;
-            markNeighborsDirty(rr, cc);
-          }
+          if(canPlaceLeaf(rr, cc)) leaves.add(cellKey);
         } else {
-          const hadFill = filled.has(cellKey);
-          const hadLeaf = leaves.has(cellKey);
           filled.delete(cellKey);
           leaves.delete(cellKey);
-          if(hadFill || hadLeaf){
-            changed = true;
-            markNeighborsDirty(rr, cc);
-          }
         }
       }
 
-      if(changed){
-        scheduleRender();
-        scheduleReadingUpdate();
-      }
+      render();
+      updateReading();
     }
 
     function getCellFromPoint(clientX, clientY){
@@ -1114,7 +999,7 @@
     function clearTree(){
       filled.clear();
       leaves.clear();
-      renderDirty(true);
+      render();
       updateReading();
       updateStatusLine('Canvas cleared.');
     }
@@ -1133,7 +1018,7 @@
         if(inBounds(r, center)) filled.add(key(r, center));
       }
 
-      renderDirty(true);
+      render();
       updateReading();
       updateStatusLine('Seed planted.');
     }
@@ -1274,14 +1159,20 @@
       const widths = [58, 62, 66, 60, 64, 68];
       const heights = [52, 56, 58, 54, 57, 60];
       const rotations = [-16, -8, 0, 8, 14, 20];
-      const fills = [
-        'linear-gradient(180deg, #c1efb9, #7cab70)',
-        'linear-gradient(180deg, #b9e6b0, #6d9a63)',
-        'linear-gradient(180deg, #c8f1bc, #85b777)',
-        'linear-gradient(180deg, #b5dfad, #6a9460)',
-        'linear-gradient(180deg, #c3ebba, #79a96f)',
-        'linear-gradient(180deg, #bde3b3, #729d67)'
-      ];
+
+      const palette = {
+        light: ['#c9f2bf', '#bde8b5', '#d0f6c4'],
+        mid:   ['#9ccc88', '#88b876', '#92c27d'],
+        dark:  ['#6f9f69', '#648f5f', '#5e8758']
+      };
+
+      const colBand = (((c % 5) + 5) % 5);
+      const rowBand = (((r % 4) + 4) % 4);
+      const mixSeed = (((r * 13 + c * 19) % 7) + 7) % 7;
+
+      let variant = 1;
+      if (colBand === 0 || mixSeed === 0) variant = 0;
+      if (colBand === 4 || rowBand === 0 || mixSeed === 6) variant = 2;
 
       const sizeBoost = Math.min(6, nearbyLeaves * 1.5);
 
@@ -1289,12 +1180,57 @@
         w: widths[seed] + sizeBoost,
         h: heights[seed] + sizeBoost,
         rot: rotations[seed],
-        fill: fills[seed]
+        fill: `linear-gradient(180deg, ${palette.light[variant]}, ${palette.mid[variant]} 46%, ${palette.dark[variant]})`
       };
     }
 
     function render(){
-      renderDirty(true);
+      for(let r = 0; r < ROWS; r++){
+        for(let c = 0; c < COLS; c++){
+          const cell = cells[r][c];
+          cell.className = 'cell';
+          cell.innerHTML = '';
+          cell.style.removeProperty('--wood-fill');
+          cell.style.removeProperty('--leaf-fill');
+
+          if(isFilled(r,c)){
+            cell.classList.add('filled');
+            const color = woodColor(r,c);
+            const shape = getWoodShape(r,c);
+            cell.style.setProperty('--wood-fill', color);
+
+            const wood = document.createElement('div');
+            wood.className = 'wood';
+            wood.style.setProperty('--wood-w', `${shape.w}%`);
+            wood.style.setProperty('--wood-h', `${shape.h}%`);
+            cell.appendChild(wood);
+
+            if(shape.up) addConnector(cell, 'up', shape);
+            if(shape.down) addConnector(cell, 'down', shape);
+            if(shape.left) addConnector(cell, 'left', shape);
+            if(shape.right) addConnector(cell, 'right', shape);
+
+            if(shape.ul && !shape.up && !shape.left) addDiag(cell, 'ul');
+            if(shape.ur && !shape.up && !shape.right) addDiag(cell, 'ur');
+            if(shape.dl && !shape.down && !shape.left) addDiag(cell, 'dl');
+            if(shape.dr && !shape.down && !shape.right) addDiag(cell, 'dr');
+
+            if(isTip(r,c) && r < ROWS - 2) cell.classList.add('tip');
+          } else if(isLeaf(r,c)){
+            cell.classList.add('leafed');
+            const leafLook = leafAppearance(r,c);
+            const leaf = document.createElement('div');
+            leaf.className = 'leaf';
+            leaf.style.setProperty('--leaf-w', `${leafLook.w}%`);
+            leaf.style.setProperty('--leaf-h', `${leafLook.h}%`);
+            leaf.style.setProperty('--leaf-rot', `${leafLook.rot}deg`);
+            leaf.style.setProperty('--leaf-fill', leafLook.fill);
+            cell.appendChild(leaf);
+          }
+        }
+      }
+      filledCountEl.textContent = String(filled.size);
+      leafCountEl.textContent = String(leaves.size);
     }
 
     function getMetrics(){
@@ -1468,7 +1404,7 @@
 
     createGrid();
     fitGridToFrame();
-    renderDirty(true);
+    render();
     updateReading();
     updateStatusLine();
   </script>
