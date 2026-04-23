@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>Tree v4.4 Layout Kept / Old Brush Return</title>
+  <title>Tree v4.5 Wood Styles</title>
   <style>
     :root{
       --text:#efe5d2;
@@ -20,7 +20,7 @@
       --gap:0px;
       --panel-width:380px;
       --scene-min:640px;
-      --mobile-dock-h: 126px;
+      --mobile-dock-h: 168px;
       --frame-pad-x: 18px;
       --frame-pad-y: 18px;
     }
@@ -260,6 +260,13 @@
     }
     .mode-row{ grid-template-columns:repeat(3, 1fr); }
     .action-row{ grid-template-columns:1fr 1fr; }
+
+    .wood-style-row{
+      display:grid;
+      grid-template-columns:repeat(2, 1fr);
+      gap:8px;
+      margin-top:10px;
+    }
 
     button{
       appearance:none;
@@ -648,7 +655,7 @@
         box-shadow:inset 0 1px 0 rgba(255,226,180,.05), 0 20px 34px rgba(0,0,0,.32);
         padding:8px;
       }
-      .dock-top, .dock-modes, .dock-middle, .dock-bottom{
+      .dock-top, .dock-modes, .dock-middle, .dock-woods, .dock-bottom{
         display:grid;
         gap:6px;
         margin-bottom:6px;
@@ -656,6 +663,7 @@
       .dock-top{ grid-template-columns:1fr; }
       .dock-modes{ grid-template-columns:repeat(3, 1fr); }
       .dock-middle{ grid-template-columns:repeat(6, 1fr); }
+      .dock-woods{ grid-template-columns:repeat(4, 1fr); }
       .dock-bottom{ grid-template-columns:1fr 1fr; margin-bottom:0; }
       .mobile-dock button{
         padding:9px 6px;
@@ -673,7 +681,7 @@
     }
 
     @media (max-width: 420px){
-      :root{ --cell-size:4px; --mobile-dock-h: 108px; }
+      :root{ --cell-size:4px; --mobile-dock-h: 146px; }
       .app{ padding:8px; gap:8px; }
       .scene{ min-height:68svh; }
       .mobile-dock button{ padding:8px 5px; font-size:.86rem; }
@@ -721,6 +729,14 @@
           <button class="mode-btn active" data-mode="wood">Wood</button>
           <button class="mode-btn" data-mode="leaf">Leaves</button>
           <button class="mode-btn" data-mode="erase">Erase</button>
+        </div>
+
+        <div class="box-title" style="margin-top:10px;">Wood Tone</div>
+        <div class="wood-style-row">
+          <button class="wood-style-btn active" data-wood-style="oak">Oak</button>
+          <button class="wood-style-btn" data-wood-style="walnut">Walnut</button>
+          <button class="wood-style-btn" data-wood-style="ash">Ash</button>
+          <button class="wood-style-btn" data-wood-style="cedar">Cedar</button>
         </div>
 
         <div class="action-row">
@@ -792,6 +808,13 @@
           <button class="mobile-size-btn" data-size="6">6</button>
         </div>
 
+        <div class="dock-woods">
+          <button class="mobile-wood-btn active" data-wood-style="oak">Oak</button>
+          <button class="mobile-wood-btn" data-wood-style="walnut">Walnut</button>
+          <button class="mobile-wood-btn" data-wood-style="ash">Ash</button>
+          <button class="mobile-wood-btn" data-wood-style="cedar">Cedar</button>
+        </div>
+
         <div class="dock-bottom">
           <button id="mobileSeedBtn">Seed</button>
           <button id="mobileClearBtn">Clear</button>
@@ -806,6 +829,7 @@
 
     const sizeButtons = [...document.querySelectorAll('.size-btn, .mobile-size-btn')];
     const modeButtons = [...document.querySelectorAll('.mode-btn, .mobile-mode-btn')];
+    const woodStyleButtons = [...document.querySelectorAll('.wood-style-btn, .mobile-wood-btn')];
     const clearBtns = [...document.querySelectorAll('#clearBtn, #mobileClearBtn')];
     const seedBtns = [...document.querySelectorAll('#seedBtn, #mobileSeedBtn')];
     const drawLockBtn = document.getElementById('drawLockBtn');
@@ -819,6 +843,7 @@
 
     let brushSize = 4;
     let mode = 'wood';
+    let woodStyle = 'oak';
     let cells = [];
     let filled = new Set();
     let leaves = new Set();
@@ -937,6 +962,13 @@
       updateStatusLine();
     }
 
+    function setWoodStyle(nextStyle){
+      woodStyle = nextStyle;
+      woodStyleButtons.forEach(btn => btn.classList.toggle('active', btn.dataset.woodStyle === woodStyle));
+      render();
+      updateStatusLine(`Wood tone: ${woodStyle.charAt(0).toUpperCase() + woodStyle.slice(1)}.`);
+    }
+
     function setBrushSize(size){
       brushSize = size;
       sizeButtons.forEach(btn => btn.classList.toggle('active', Number(btn.dataset.size) === brushSize));
@@ -1008,10 +1040,34 @@
 
 
     function woodColor(r, c){
+      const styles = {
+        oak: {
+          dense: 'linear-gradient(180deg, #a98a73, #705847)',
+          mid: 'linear-gradient(180deg, #987963, #624c3d)',
+          thin: 'linear-gradient(180deg, #856a57, #564135)'
+        },
+        walnut: {
+          dense: 'linear-gradient(180deg, #8a6a5a, #574033)',
+          mid: 'linear-gradient(180deg, #795c4e, #4c382d)',
+          thin: 'linear-gradient(180deg, #684f44, #3f2f26)'
+        },
+        ash: {
+          dense: 'linear-gradient(180deg, #999289, #666059)',
+          mid: 'linear-gradient(180deg, #898179, #5a544e)',
+          thin: 'linear-gradient(180deg, #77706a, #4d4742)'
+        },
+        cedar: {
+          dense: 'linear-gradient(180deg, #a47a69, #6b4a3d)',
+          mid: 'linear-gradient(180deg, #956e5e, #603f34)',
+          thin: 'linear-gradient(180deg, #856152, #53372d)'
+        }
+      };
+
+      const palette = styles[woodStyle] || styles.oak;
       const n = neighborCount(r,c);
-      if(n >= 6) return 'linear-gradient(180deg, #8f6d57, #654838)';
-      if(n >= 3) return 'linear-gradient(180deg, #7f604c, #5a4032)';
-      return 'linear-gradient(180deg, #6f5545, #4b352a)';
+      if(n >= 6) return palette.dense;
+      if(n >= 3) return palette.mid;
+      return palette.thin;
     }
 
     function getWoodShape(r, c){
@@ -1251,7 +1307,8 @@
       const modeLabel = mode === 'wood' ? 'Wood' : mode === 'leaf' ? 'Leaves' : 'Erase';
 
       if (window.matchMedia('(max-width: 860px)').matches) {
-        text += drawEnabled ? `Draw is ON · ${modeLabel} · size ${brushSize}` : 'Draw is OFF · safe to scroll';
+        const woodLabel = woodStyle.charAt(0).toUpperCase() + woodStyle.slice(1);
+        text += drawEnabled ? `Draw is ON · ${modeLabel} · size ${brushSize} · ${woodLabel}` : 'Draw is OFF · safe to scroll';
         mobileStatusEl.textContent = text;
         return;
       }
@@ -1300,6 +1357,7 @@
 
     sizeButtons.forEach(btn => btn.addEventListener('click', () => setBrushSize(Number(btn.dataset.size))));
     modeButtons.forEach(btn => btn.addEventListener('click', () => setMode(btn.dataset.mode)));
+    woodStyleButtons.forEach(btn => btn.addEventListener('click', () => setWoodStyle(btn.dataset.woodStyle)));
     clearBtns.forEach(btn => btn.addEventListener('click', clearTree));
     seedBtns.forEach(btn => btn.addEventListener('click', seedTrunk));
     drawLockBtn.addEventListener('click', () => setDrawEnabled(!drawEnabled));
