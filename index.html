@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>Tree v4.7 Mobile Tap Hold Mode</title>
+  <title>Tree v4.8 Mobile Drag Fix</title>
   <style>
     :root{
       --text:#efe5d2;
@@ -409,6 +409,7 @@
       overflow:hidden;
       -webkit-overflow-scrolling:touch;
       z-index:1;
+      touch-action:none;
     }
 
     .grid-frame{
@@ -419,6 +420,7 @@
       position:relative;
       overflow:hidden;
       isolation:isolate;
+      touch-action:none;
       background:
         radial-gradient(circle at 50% 12%, rgba(212,225,255,.05), transparent 18%),
         linear-gradient(180deg, rgba(17,24,35,.96) 0%, rgba(10,16,26,.98) 62%, rgba(7,11,18,1) 100%);
@@ -815,7 +817,7 @@
 
     <div class="mobile-dock">
       <div class="dock-inner">
-        <div class="mobile-status" id="mobileStatus">Draw is ON · Wood · size 4</div>
+        <div class="mobile-status" id="mobileStatus">Drag to draw · Wood · size 4</div>
 
         <div class="dock-modes">
           <button class="mobile-mode-btn active" data-mode="wood">Wood</button>
@@ -871,6 +873,7 @@
     let lastDrawCell = null;
     let mobileCurrentCell = null;
     let mobileHoldTimer = null;
+    let activePointerId = null;
 
     function key(r, c){ return `${r},${c}`; }
     function inBounds(r, c){ return r >= 0 && r < ROWS && c >= 0 && c < COLS; }
@@ -1248,8 +1251,6 @@
           }
         }
       }
-      filledCountEl.textContent = String(filled.size);
-      leafCountEl.textContent = String(leaves.size);
     }
 
     function getMetrics(){
@@ -1386,28 +1387,16 @@
       statusLineEl.textContent = text || defaultText;
     }
 
-    function beginPointer(clientX, clientY){
+    function beginPointer(clientX, clientY, pointerId = null){
       if (!drawEnabled) return;
       isPointerDown = true;
+      activePointerId = pointerId;
       lastPaintKey = null;
 
       const cell = getCellFromPoint(clientX, clientY);
       lastDrawCell = cell;
       lastMoveCell = cell ? `${cell[0]},${cell[1]}` : null;
-
-      if(isMobileLayout()){
-        mobileCurrentCell = cell;
-        if(cell){
-          paintAt(cell[0], cell[1]);
-        }
-        stopMobileHold();
-        mobileHoldTimer = setInterval(() => {
-          if(!isPointerDown || !mobileCurrentCell) return;
-          lastPaintKey = null;
-          paintAt(mobileCurrentCell[0], mobileCurrentCell[1]);
-        }, 95);
-        return;
-      }
+      mobileCurrentCell = cell;
 
       if(cell) paintAt(cell[0], cell[1]);
     }
@@ -1419,16 +1408,16 @@
       if(!cell) return;
 
       const cellKey = `${cell[0]},${cell[1]}`;
+      if(lastMoveCell === cellKey) return;
+
+      mobileCurrentCell = cell;
 
       if(isMobileLayout()){
-        mobileCurrentCell = cell;
-        lastMoveCell = cellKey;
-        lastDrawCell = cell;
-        return;
+        paintLine(lastDrawCell, cell);
+      } else {
+        paintAt(cell[0], cell[1]);
       }
 
-      if(lastMoveCell === cellKey) return;
-      paintAt(cell[0], cell[1]);
       lastMoveTs = performance.now();
       lastMoveCell = cellKey;
       lastDrawCell = cell;
@@ -1441,22 +1430,34 @@
       lastMoveCell = null;
       lastDrawCell = null;
       mobileCurrentCell = null;
+      activePointerId = null;
       stopMobileHold();
     }
 
     gridEl.addEventListener('pointerdown', (e) => {
       if (!drawEnabled) return;
       e.preventDefault();
-      beginPointer(e.clientX, e.clientY);
+      if(gridEl.setPointerCapture){
+        try{ gridEl.setPointerCapture(e.pointerId); } catch(err){}
+      }
+      beginPointer(e.clientX, e.clientY, e.pointerId);
     });
 
     window.addEventListener('pointermove', (e) => {
-      if (!drawEnabled) return;
+      if (!drawEnabled || !isPointerDown) return;
+      if(activePointerId !== null && e.pointerId !== activePointerId) return;
+      e.preventDefault();
       movePointer(e.clientX, e.clientY);
     }, { passive: false });
 
-    window.addEventListener('pointerup', endPointer);
-    window.addEventListener('pointercancel', endPointer);
+    window.addEventListener('pointerup', (e) => {
+      if(activePointerId !== null && e.pointerId !== activePointerId) return;
+      endPointer();
+    });
+    window.addEventListener('pointercancel', (e) => {
+      if(activePointerId !== null && e.pointerId !== activePointerId) return;
+      endPointer();
+    });
     window.addEventListener('blur', endPointer);
     document.addEventListener('visibilitychange', () => {
       if(document.hidden) endPointer();
