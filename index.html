@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>Tree v4.9 Mobile Instant Touch</title>
+  <title>Tree v5.0 Mobile Fast Paint</title>
   <style>
     :root{
       --text:#efe5d2;
@@ -510,6 +510,18 @@
       box-shadow: inset 0 0 0 1px rgba(255,255,255,.006);
     }
 
+    .cell.fast-wood{
+      background:linear-gradient(180deg, #a5846c, #6f4c2d) !important;
+      border-radius:999px;
+      box-shadow:none !important;
+    }
+
+    .cell.fast-leaf{
+      background:linear-gradient(180deg, #c8f1bc, #5f8f55) !important;
+      border-radius:66% 34% 62% 38% / 46% 60% 40% 54%;
+      box-shadow:none !important;
+    }
+
     .cell.filled,
     .cell.leafed{
       background:transparent;
@@ -875,6 +887,8 @@
     let mobileHoldTimer = null;
     let activePointerId = null;
     let readingTimer = null;
+    let deferredDirty = new Set();
+    let deferredRenderTimer = null;
 
     function key(r, c){ return `${r},${c}`; }
     function inBounds(r, c){ return r >= 0 && r < ROWS && c >= 0 && c < COLS; }
@@ -967,6 +981,53 @@
       }, 90);
     }
 
+    function applyFastCell(r, c){
+      if(!inBounds(r, c)) return;
+      const cell = cells[r][c];
+      cell.innerHTML = '';
+      cell.style.removeProperty('--wood-fill');
+      cell.style.removeProperty('--leaf-fill');
+
+      if(isFilled(r, c)){
+        cell.className = 'cell filled fast-wood';
+      } else if(isLeaf(r, c)){
+        cell.className = 'cell leafed fast-leaf';
+      } else {
+        cell.className = 'cell';
+      }
+    }
+
+    function renderFastDirty(dirty){
+      if(!dirty || dirty.size === 0) return;
+      for(const cellKey of dirty){
+        const [r, c] = cellKey.split(',').map(Number);
+        applyFastCell(r, c);
+      }
+    }
+
+    function queueDetailedRender(dirty, delay = 170){
+      if(!dirty || dirty.size === 0) return;
+      for(const cellKey of dirty) deferredDirty.add(cellKey);
+      if(deferredRenderTimer) clearTimeout(deferredRenderTimer);
+      deferredRenderTimer = setTimeout(() => {
+        deferredRenderTimer = null;
+        const batch = deferredDirty;
+        deferredDirty = new Set();
+        renderDirty(batch);
+      }, delay);
+    }
+
+    function flushDetailedRender(delay = 30){
+      if(deferredRenderTimer) clearTimeout(deferredRenderTimer);
+      if(deferredDirty.size === 0) return;
+      deferredRenderTimer = setTimeout(() => {
+        deferredRenderTimer = null;
+        const batch = deferredDirty;
+        deferredDirty = new Set();
+        renderDirty(batch);
+      }, delay);
+    }
+
     function paintAt(r, c, renderNow = true, dirtyTarget = null){
       const k = key(r,c);
       if(lastPaintKey === `${mode}:${brushSize}:${k}`) return dirtyTarget || new Set();
@@ -999,7 +1060,12 @@
       }
 
       if(renderNow){
-        renderDirty(dirty);
+        if(isMobileLayout()){
+          renderFastDirty(dirty);
+          queueDetailedRender(dirty);
+        } else {
+          renderDirty(dirty);
+        }
         scheduleReadingUpdate();
       }
 
@@ -1020,15 +1086,23 @@
         const c = Math.round(c0 + ((c1 - c0) * i) / steps);
         paintAt(r, c, false, dirty);
       }
-      renderDirty(dirty);
+      if(isMobileLayout()){
+        renderFastDirty(dirty);
+        queueDetailedRender(dirty);
+      } else {
+        renderDirty(dirty);
+      }
       scheduleReadingUpdate();
     }
 
     function getCellFromPoint(clientX, clientY){
-      const el = document.elementFromPoint(clientX, clientY);
-      const cell = el?.closest?.('.cell');
-      if(!cell) return null;
-      return [Number(cell.dataset.r), Number(cell.dataset.c)];
+      const rect = gridEl.getBoundingClientRect();
+      if(clientX < rect.left || clientX > rect.right || clientY < rect.top || clientY > rect.bottom) return null;
+      const cellW = rect.width / COLS;
+      const cellH = rect.height / ROWS;
+      const c = Math.max(0, Math.min(COLS - 1, Math.floor((clientX - rect.left) / cellW)));
+      const r = Math.max(0, Math.min(ROWS - 1, Math.floor((clientY - rect.top) / cellH)));
+      return [r, c];
     }
 
     function setMode(nextMode){
@@ -1420,7 +1494,7 @@
       const modeLabel = mode === 'wood' ? 'Wood' : mode === 'leaf' ? 'Leaves' : 'Erase';
 
       if (isMobileLayout()) {
-        text += `Tap / drag · ${modeLabel} · ${brushSize}`;
+        text += `Fast paint · ${modeLabel} · ${brushSize}`;
         mobileStatusEl.textContent = text;
         return;
       }
@@ -1478,6 +1552,7 @@
       lastDrawCell = null;
       mobileCurrentCell = null;
       activePointerId = null;
+      flushDetailedRender(20);
       stopMobileHold();
     }
 
