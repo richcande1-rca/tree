@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>Tree v5.0 Mobile Fast Paint</title>
+  <title>Tree v5.1 Mobile Coarse Grid</title>
   <style>
     :root{
       --text:#efe5d2;
@@ -793,7 +793,7 @@
       </div>
 
       <div class="rules">
-        Paint wood, taper with smaller sizes, and leaf the outer air around the branches. On phones, the carved controls move into a compact dock below the tree.
+        Paint wood, taper with smaller sizes, and leaf the outer air around the branches. On phones, the board uses a chunkier brush-grid and the carved controls move into a compact dock below the tree.
       </div>
     </aside>
 
@@ -855,8 +855,27 @@
   </div>
 
   <script>
-    const COLS = 72;
-    const ROWS = 96;
+    const DESKTOP_COLS = 72;
+    const DESKTOP_ROWS = 96;
+    const MOBILE_COLS = 48;
+    const MOBILE_ROWS = 64;
+
+    let COLS = DESKTOP_COLS;
+    let ROWS = DESKTOP_ROWS;
+
+    function preferredGridSize(){
+      return window.matchMedia('(max-width: 860px)').matches
+        ? { cols: MOBILE_COLS, rows: MOBILE_ROWS }
+        : { cols: DESKTOP_COLS, rows: DESKTOP_ROWS };
+    }
+
+    function applyPreferredGridSize(){
+      const next = preferredGridSize();
+      const changed = next.cols !== COLS || next.rows !== ROWS;
+      COLS = next.cols;
+      ROWS = next.rows;
+      return changed;
+    }
 
     const sizeButtons = [...document.querySelectorAll('.size-btn, .mobile-size-btn')];
     const modeButtons = [...document.querySelectorAll('.mode-btn, .mobile-mode-btn')];
@@ -931,13 +950,18 @@
 
     function getBrushOffsets(size){
       const radiusMap = { 1: 0, 2: 1.05, 3: 1.45, 4: 1.9, 5: 2.35, 6: 2.85 };
-      const mobileRadiusMap = { 1: 0, 2: 1.0, 3: 1.3, 4: 1.7, 5: 2.05, 6: 2.45 };
+
+      // Phones get a true finger-painting brush map. The smallest mobile
+      // brush is intentionally chunky so touches feel intentional instead
+      // of like random pin-prick dots.
+      const mobileRadiusMap = { 1: 1.15, 2: 1.65, 3: 2.15, 4: 2.75, 5: 3.35, 6: 3.95 };
       const isMobile = window.matchMedia('(max-width: 860px)').matches;
       const radius = isMobile ? mobileRadiusMap[size] : radiusMap[size];
+      const span = Math.ceil(radius);
       const offsets = [];
 
-      for(let dr = -3; dr <= 3; dr++){
-        for(let dc = -3; dc <= 3; dc++){
+      for(let dr = -span; dr <= span; dr++){
+        for(let dc = -span; dc <= span; dc++){
           const dist = Math.sqrt((dr * dr) + (dc * dc));
           if(dist <= radius) offsets.push([dr, dc]);
         }
@@ -1494,7 +1518,7 @@
       const modeLabel = mode === 'wood' ? 'Wood' : mode === 'leaf' ? 'Leaves' : 'Erase';
 
       if (isMobileLayout()) {
-        text += `Fast paint · ${modeLabel} · ${brushSize}`;
+        text += `Coarse mobile grid ·  · `;
         mobileStatusEl.textContent = text;
         return;
       }
@@ -1592,10 +1616,22 @@
     seedBtns.forEach(btn => btn.addEventListener('click', seedTrunk));
 
     window.addEventListener('resize', () => {
+      const gridChanged = applyPreferredGridSize();
+      if(gridChanged){
+        // Desktop remains the full fine grid. Phones rebuild into a lighter,
+        // chunkier grid that is much easier to finger-paint. We clear on a
+        // layout-class switch rather than trying to remap every cell.
+        filled.clear();
+        leaves.clear();
+        createGrid();
+        updateReading();
+      }
       fitGridToFrame();
-      updateStatusLine();
+      render();
+      updateStatusLine(gridChanged ? 'Grid adjusted for this screen.' : '');
     });
 
+    applyPreferredGridSize();
     createGrid();
     fitGridToFrame();
     render();
