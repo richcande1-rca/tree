@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>Tree v5.1 Mobile Coarse Grid</title>
+  <title>Tree v5.2 Mobile Smooth Stroke</title>
   <style>
     :root{
       --text:#efe5d2;
@@ -829,7 +829,7 @@
 
     <div class="mobile-dock">
       <div class="dock-inner">
-        <div class="mobile-status" id="mobileStatus">Drag to draw · Wood · size 4</div>
+        <div class="mobile-status" id="mobileStatus">Smooth mobile stroke · Wood · size 4</div>
 
         <div class="dock-modes">
           <button class="mobile-mode-btn active" data-mode="wood">Wood</button>
@@ -1008,17 +1008,18 @@
     function applyFastCell(r, c){
       if(!inBounds(r, c)) return;
       const cell = cells[r][c];
+
+      let nextClass = 'cell';
+      if(isFilled(r, c)) nextClass = 'cell filled fast-wood';
+      else if(isLeaf(r, c)) nextClass = 'cell leafed fast-leaf';
+
+      // Avoid expensive DOM churn when the fast visual state is already right.
+      if(cell.className === nextClass && cell.childNodes.length === 0) return;
+
       cell.innerHTML = '';
       cell.style.removeProperty('--wood-fill');
       cell.style.removeProperty('--leaf-fill');
-
-      if(isFilled(r, c)){
-        cell.className = 'cell filled fast-wood';
-      } else if(isLeaf(r, c)){
-        cell.className = 'cell leafed fast-leaf';
-      } else {
-        cell.className = 'cell';
-      }
+      cell.className = nextClass;
     }
 
     function renderFastDirty(dirty){
@@ -1052,12 +1053,17 @@
       }, delay);
     }
 
-    function paintAt(r, c, renderNow = true, dirtyTarget = null){
+    function paintAt(r, c, renderNow = true, detailTarget = null, fastTarget = null){
       const k = key(r,c);
-      if(lastPaintKey === `${mode}:${brushSize}:${k}`) return dirtyTarget || new Set();
+      if(lastPaintKey === `${mode}:${brushSize}:${k}`) return detailTarget || new Set();
       lastPaintKey = `${mode}:${brushSize}:${k}`;
 
-      const dirty = dirtyTarget || new Set();
+      // Mobile needs two paint paths:
+      // 1) fastDirty = cells that visually change immediately under the finger
+      // 2) detailDirty = nearby cells rebuilt later into the prettier carved look
+      // This keeps dragging responsive without losing the settled woodcut style.
+      const detailDirty = detailTarget || new Set();
+      const fastDirty = fastTarget || new Set();
       const offsets = getBrushOffsets(brushSize);
 
       for(const [dr, dc] of offsets){
@@ -1079,21 +1085,22 @@
         }
 
         if(wasWood !== filled.has(cellKey) || wasLeaf !== leaves.has(cellKey)){
-          addDirtyAround(dirty, rr, cc, 2);
+          fastDirty.add(cellKey);
+          addDirtyAround(detailDirty, rr, cc, 2);
         }
       }
 
       if(renderNow){
         if(isMobileLayout()){
-          renderFastDirty(dirty);
-          queueDetailedRender(dirty);
+          renderFastDirty(fastDirty);
+          queueDetailedRender(detailDirty, isPointerDown ? 320 : 120);
         } else {
-          renderDirty(dirty);
+          renderDirty(detailDirty);
         }
         scheduleReadingUpdate();
       }
 
-      return dirty;
+      return detailDirty;
     }
 
     function paintLine(fromCell, toCell){
@@ -1101,20 +1108,29 @@
         if(toCell) paintAt(toCell[0], toCell[1]);
         return;
       }
-      const dirty = new Set();
+
+      const detailDirty = new Set();
+      const fastDirty = new Set();
       const [r0, c0] = fromCell;
       const [r1, c1] = toCell;
-      const steps = Math.max(Math.abs(r1 - r0), Math.abs(c1 - c0), 1);
+      const distance = Math.max(Math.abs(r1 - r0), Math.abs(c1 - c0), 1);
+
+      // On phones, oversample the line slightly so quick finger moves do not
+      // produce stair-step gaps. It still paints logical cells, just with a
+      // denser pass between pointer events.
+      const steps = isMobileLayout() ? Math.ceil(distance * 2.25) : distance;
+
       for(let i = 0; i <= steps; i++){
         const r = Math.round(r0 + ((r1 - r0) * i) / steps);
         const c = Math.round(c0 + ((c1 - c0) * i) / steps);
-        paintAt(r, c, false, dirty);
+        paintAt(r, c, false, detailDirty, fastDirty);
       }
+
       if(isMobileLayout()){
-        renderFastDirty(dirty);
-        queueDetailedRender(dirty);
+        renderFastDirty(fastDirty);
+        queueDetailedRender(detailDirty, 320);
       } else {
-        renderDirty(dirty);
+        renderDirty(detailDirty);
       }
       scheduleReadingUpdate();
     }
@@ -1518,7 +1534,7 @@
       const modeLabel = mode === 'wood' ? 'Wood' : mode === 'leaf' ? 'Leaves' : 'Erase';
 
       if (isMobileLayout()) {
-        text += `Coarse mobile grid ·  · `;
+        text += `Smooth mobile stroke · ${modeLabel} · size ${brushSize}`;
         mobileStatusEl.textContent = text;
         return;
       }
