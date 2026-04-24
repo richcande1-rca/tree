@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>Tree v4.8 Mobile Drag Fix</title>
+  <title>Tree v4.9 Mobile Instant Touch</title>
   <style>
     :root{
       --text:#efe5d2;
@@ -874,6 +874,7 @@
     let mobileCurrentCell = null;
     let mobileHoldTimer = null;
     let activePointerId = null;
+    let readingTimer = null;
 
     function key(r, c){ return `${r},${c}`; }
     function inBounds(r, c){ return r >= 0 && r < ROWS && c >= 0 && c < COLS; }
@@ -948,17 +949,39 @@
       return hasNearby(leaves, r, c, 1) && hasNearby(filled, r, c, 2);
     }
 
-    function paintAt(r, c){
+    function addDirtyAround(dirty, r, c, radius = 2){
+      for(let dr = -radius; dr <= radius; dr++){
+        for(let dc = -radius; dc <= radius; dc++){
+          const rr = r + dr;
+          const cc = c + dc;
+          if(inBounds(rr, cc)) dirty.add(key(rr, cc));
+        }
+      }
+    }
+
+    function scheduleReadingUpdate(){
+      if(readingTimer) clearTimeout(readingTimer);
+      readingTimer = setTimeout(() => {
+        readingTimer = null;
+        updateReading();
+      }, 90);
+    }
+
+    function paintAt(r, c, renderNow = true, dirtyTarget = null){
       const k = key(r,c);
-      if(lastPaintKey === `${mode}:${brushSize}:${k}`) return;
+      if(lastPaintKey === `${mode}:${brushSize}:${k}`) return dirtyTarget || new Set();
       lastPaintKey = `${mode}:${brushSize}:${k}`;
 
+      const dirty = dirtyTarget || new Set();
       const offsets = getBrushOffsets(brushSize);
+
       for(const [dr, dc] of offsets){
         const rr = r + dr;
         const cc = c + dc;
         if(!inBounds(rr, cc)) continue;
         const cellKey = key(rr, cc);
+        const wasWood = filled.has(cellKey);
+        const wasLeaf = leaves.has(cellKey);
 
         if(mode === 'wood'){
           filled.add(cellKey);
@@ -969,10 +992,18 @@
           filled.delete(cellKey);
           leaves.delete(cellKey);
         }
+
+        if(wasWood !== filled.has(cellKey) || wasLeaf !== leaves.has(cellKey)){
+          addDirtyAround(dirty, rr, cc, 2);
+        }
       }
 
-      render();
-      updateReading();
+      if(renderNow){
+        renderDirty(dirty);
+        scheduleReadingUpdate();
+      }
+
+      return dirty;
     }
 
     function paintLine(fromCell, toCell){
@@ -980,14 +1011,17 @@
         if(toCell) paintAt(toCell[0], toCell[1]);
         return;
       }
+      const dirty = new Set();
       const [r0, c0] = fromCell;
       const [r1, c1] = toCell;
       const steps = Math.max(Math.abs(r1 - r0), Math.abs(c1 - c0), 1);
       for(let i = 0; i <= steps; i++){
         const r = Math.round(r0 + ((r1 - r0) * i) / steps);
         const c = Math.round(c0 + ((c1 - c0) * i) / steps);
-        paintAt(r, c);
+        paintAt(r, c, false, dirty);
       }
+      renderDirty(dirty);
+      scheduleReadingUpdate();
     }
 
     function getCellFromPoint(clientX, clientY){
@@ -1206,49 +1240,62 @@
       };
     }
 
+    function renderCell(r, c){
+      if(!inBounds(r, c)) return;
+      const cell = cells[r][c];
+      cell.className = 'cell';
+      cell.innerHTML = '';
+      cell.style.removeProperty('--wood-fill');
+      cell.style.removeProperty('--leaf-fill');
+
+      if(isFilled(r,c)){
+        cell.classList.add('filled');
+        const color = woodColor(r,c);
+        const shape = getWoodShape(r,c);
+        cell.style.setProperty('--wood-fill', color);
+
+        const wood = document.createElement('div');
+        wood.className = 'wood';
+        wood.style.setProperty('--wood-w', `${shape.w}%`);
+        wood.style.setProperty('--wood-h', `${shape.h}%`);
+        cell.appendChild(wood);
+
+        if(shape.up) addConnector(cell, 'up', shape);
+        if(shape.down) addConnector(cell, 'down', shape);
+        if(shape.left) addConnector(cell, 'left', shape);
+        if(shape.right) addConnector(cell, 'right', shape);
+
+        if(shape.ul && !shape.up && !shape.left) addDiag(cell, 'ul');
+        if(shape.ur && !shape.up && !shape.right) addDiag(cell, 'ur');
+        if(shape.dl && !shape.down && !shape.left) addDiag(cell, 'dl');
+        if(shape.dr && !shape.down && !shape.right) addDiag(cell, 'dr');
+
+        if(isTip(r,c) && r < ROWS - 2) cell.classList.add('tip');
+      } else if(isLeaf(r,c)){
+        cell.classList.add('leafed');
+        const leafLook = leafAppearance(r,c);
+        const leaf = document.createElement('div');
+        leaf.className = 'leaf';
+        leaf.style.setProperty('--leaf-w', `${leafLook.w}%`);
+        leaf.style.setProperty('--leaf-h', `${leafLook.h}%`);
+        leaf.style.setProperty('--leaf-rot', `${leafLook.rot}deg`);
+        leaf.style.setProperty('--leaf-fill', leafLook.fill);
+        cell.appendChild(leaf);
+      }
+    }
+
+    function renderDirty(dirty){
+      if(!dirty || dirty.size === 0) return;
+      for(const cellKey of dirty){
+        const [r, c] = cellKey.split(',').map(Number);
+        renderCell(r, c);
+      }
+    }
+
     function render(){
       for(let r = 0; r < ROWS; r++){
         for(let c = 0; c < COLS; c++){
-          const cell = cells[r][c];
-          cell.className = 'cell';
-          cell.innerHTML = '';
-          cell.style.removeProperty('--wood-fill');
-          cell.style.removeProperty('--leaf-fill');
-
-          if(isFilled(r,c)){
-            cell.classList.add('filled');
-            const color = woodColor(r,c);
-            const shape = getWoodShape(r,c);
-            cell.style.setProperty('--wood-fill', color);
-
-            const wood = document.createElement('div');
-            wood.className = 'wood';
-            wood.style.setProperty('--wood-w', `${shape.w}%`);
-            wood.style.setProperty('--wood-h', `${shape.h}%`);
-            cell.appendChild(wood);
-
-            if(shape.up) addConnector(cell, 'up', shape);
-            if(shape.down) addConnector(cell, 'down', shape);
-            if(shape.left) addConnector(cell, 'left', shape);
-            if(shape.right) addConnector(cell, 'right', shape);
-
-            if(shape.ul && !shape.up && !shape.left) addDiag(cell, 'ul');
-            if(shape.ur && !shape.up && !shape.right) addDiag(cell, 'ur');
-            if(shape.dl && !shape.down && !shape.left) addDiag(cell, 'dl');
-            if(shape.dr && !shape.down && !shape.right) addDiag(cell, 'dr');
-
-            if(isTip(r,c) && r < ROWS - 2) cell.classList.add('tip');
-          } else if(isLeaf(r,c)){
-            cell.classList.add('leafed');
-            const leafLook = leafAppearance(r,c);
-            const leaf = document.createElement('div');
-            leaf.className = 'leaf';
-            leaf.style.setProperty('--leaf-w', `${leafLook.w}%`);
-            leaf.style.setProperty('--leaf-h', `${leafLook.h}%`);
-            leaf.style.setProperty('--leaf-rot', `${leafLook.rot}deg`);
-            leaf.style.setProperty('--leaf-fill', leafLook.fill);
-            cell.appendChild(leaf);
-          }
+          renderCell(r, c);
         }
       }
     }
@@ -1373,7 +1420,7 @@
       const modeLabel = mode === 'wood' ? 'Wood' : mode === 'leaf' ? 'Leaves' : 'Erase';
 
       if (isMobileLayout()) {
-        text += `Tap / hold · ${modeLabel} · ${brushSize}`;
+        text += `Tap / drag · ${modeLabel} · ${brushSize}`;
         mobileStatusEl.textContent = text;
         return;
       }
