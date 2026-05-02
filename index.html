@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>Tree v5.3 Mobile Gesture Bonsai</title>
+  <title>Tree v5.3.1 Mobile Gesture Bonsai</title>
   <style>
     :root{
       --text:#efe5d2;
@@ -1580,11 +1580,10 @@
 
     function getMobileBrushPoint(clientX, clientY){
       const rect = gridEl.getBoundingClientRect();
-      const offsetY = Math.min(62, Math.max(42, rect.height * 0.10));
+      const offsetY = 0;
 
-      // Phone drawing works more like a calm little drawing tablet now:
-      // your finger drives the brush, but the actual mark lands just above it
-      // so the tree is not hidden under your thumb.
+      // Keep the mobile gesture feel, but place the brush reticle directly
+      // under the fingertip instead of floating above it.
       let x = clientX;
       let y = clientY - offsetY;
 
