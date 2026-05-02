@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>Tree v5.2 Mobile Smooth Stroke</title>
+  <title>Tree v5.3 Mobile Gesture Bonsai</title>
   <style>
     :root{
       --text:#efe5d2;
@@ -635,6 +635,46 @@
       z-index:2;
     }
 
+
+
+    .brush-cursor{
+      display:none;
+      position:fixed;
+      left:0;
+      top:0;
+      width:28px;
+      height:28px;
+      margin-left:-14px;
+      margin-top:-14px;
+      border-radius:50%;
+      border:1px solid rgba(232,218,190,.88);
+      box-shadow:
+        0 0 0 1px rgba(0,0,0,.38),
+        0 0 14px rgba(198,161,102,.34),
+        inset 0 0 8px rgba(198,161,102,.18);
+      opacity:0;
+      transform:translate3d(-999px,-999px,0);
+      pointer-events:none;
+      z-index:36;
+      transition:opacity .12s ease;
+    }
+
+    .brush-cursor::before,
+    .brush-cursor::after{
+      content:"";
+      position:absolute;
+      left:50%;
+      top:50%;
+      transform:translate(-50%, -50%);
+      background:rgba(232,218,190,.78);
+      border-radius:999px;
+      pointer-events:none;
+    }
+
+    .brush-cursor::before{ width:18px; height:1px; }
+    .brush-cursor::after{ width:1px; height:18px; }
+    .brush-cursor.active{ opacity:.88; }
+
     .mobile-dock{ display:none; }
 
     @media (max-width: 1180px){
@@ -667,6 +707,7 @@
       }
       .corner-etch{ width:62px; height:62px; opacity:.12; }
       .status-line{ display:none; }
+      .brush-cursor{ display:block; }
       .mobile-dock{
         display:block;
         position:fixed;
@@ -825,11 +866,12 @@
         </div>
       </div>
       <div class="status-line" id="statusLine">Paint the trunk first. Let it taper as it rises.</div>
+      <div class="brush-cursor" id="brushCursor" aria-hidden="true"></div>
     </main>
 
     <div class="mobile-dock">
       <div class="dock-inner">
-        <div class="mobile-status" id="mobileStatus">Smooth mobile stroke · Wood · size 4</div>
+        <div class="mobile-status" id="mobileStatus">Gesture mobile · Wood · size 4</div>
 
         <div class="dock-modes">
           <button class="mobile-mode-btn active" data-mode="wood">Wood</button>
@@ -857,8 +899,8 @@
   <script>
     const DESKTOP_COLS = 72;
     const DESKTOP_ROWS = 96;
-    const MOBILE_COLS = 48;
-    const MOBILE_ROWS = 64;
+    const MOBILE_COLS = 32;
+    const MOBILE_ROWS = 44;
 
     let COLS = DESKTOP_COLS;
     let ROWS = DESKTOP_ROWS;
@@ -889,6 +931,7 @@
     const readDescEl = document.getElementById('readDesc');
     const mobileStatusEl = document.getElementById('mobileStatus');
     const statusLineEl = document.getElementById('statusLine');
+    const brushCursorEl = document.getElementById('brushCursor');
 
     let brushSize = 4;
     let mode = 'wood';
@@ -908,6 +951,13 @@
     let readingTimer = null;
     let deferredDirty = new Set();
     let deferredRenderTimer = null;
+    let mobileCursorX = 0;
+    let mobileCursorY = 0;
+    let mobileCursorReady = false;
+    let lastMobilePaintTs = 0;
+
+    const MOBILE_PAINT_INTERVAL_MS = 28;
+    const MOBILE_CURSOR_SMOOTHING = 0.46;
 
     function key(r, c){ return `${r},${c}`; }
     function inBounds(r, c){ return r >= 0 && r < ROWS && c >= 0 && c < COLS; }
@@ -954,7 +1004,7 @@
       // Phones get a true finger-painting brush map. The smallest mobile
       // brush is intentionally chunky so touches feel intentional instead
       // of like random pin-prick dots.
-      const mobileRadiusMap = { 1: 1.15, 2: 1.65, 3: 2.15, 4: 2.75, 5: 3.35, 6: 3.95 };
+      const mobileRadiusMap = { 1: 0.95, 2: 1.35, 3: 1.85, 4: 2.35, 5: 2.95, 6: 3.45 };
       const isMobile = window.matchMedia('(max-width: 860px)').matches;
       const radius = isMobile ? mobileRadiusMap[size] : radiusMap[size];
       const span = Math.ceil(radius);
@@ -1115,10 +1165,10 @@
       const [r1, c1] = toCell;
       const distance = Math.max(Math.abs(r1 - r0), Math.abs(c1 - c0), 1);
 
-      // On phones, oversample the line slightly so quick finger moves do not
-      // produce stair-step gaps. It still paints logical cells, just with a
-      // denser pass between pointer events.
-      const steps = isMobileLayout() ? Math.ceil(distance * 2.25) : distance;
+      // Mobile gesture mode uses a simpler grid and larger forgiving brush,
+      // so it needs fewer interpolation passes than the old tiny-cell phone mode.
+      // That keeps the stroke calmer and avoids overwhelming slower phones.
+      const steps = isMobileLayout() ? Math.ceil(distance * 1.25) : distance;
 
       for(let i = 0; i <= steps; i++){
         const r = Math.round(r0 + ((r1 - r0) * i) / steps);
@@ -1522,6 +1572,51 @@
       return window.matchMedia('(max-width: 860px)').matches;
     }
 
+    function resetMobileCursor(){
+      mobileCursorReady = false;
+      lastMobilePaintTs = 0;
+      if(brushCursorEl) brushCursorEl.classList.remove('active');
+    }
+
+    function getMobileBrushPoint(clientX, clientY){
+      const rect = gridEl.getBoundingClientRect();
+      const offsetY = Math.min(62, Math.max(42, rect.height * 0.10));
+
+      // Phone drawing works more like a calm little drawing tablet now:
+      // your finger drives the brush, but the actual mark lands just above it
+      // so the tree is not hidden under your thumb.
+      let x = clientX;
+      let y = clientY - offsetY;
+
+      x = Math.max(rect.left + 2, Math.min(rect.right - 2, x));
+      y = Math.max(rect.top + 2, Math.min(rect.bottom - 2, y));
+
+      return { x, y };
+    }
+
+    function showMobileBrushCursor(x, y){
+      if(!brushCursorEl) return;
+      brushCursorEl.style.transform = `translate3d(${x}px, ${y}px, 0)`;
+      brushCursorEl.classList.add('active');
+    }
+
+    function getMobileGestureCell(clientX, clientY, immediate = false){
+      const target = getMobileBrushPoint(clientX, clientY);
+
+      if(!mobileCursorReady || immediate){
+        mobileCursorX = target.x;
+        mobileCursorY = target.y;
+        mobileCursorReady = true;
+      } else {
+        mobileCursorX += (target.x - mobileCursorX) * MOBILE_CURSOR_SMOOTHING;
+        mobileCursorY += (target.y - mobileCursorY) * MOBILE_CURSOR_SMOOTHING;
+      }
+
+      showMobileBrushCursor(mobileCursorX, mobileCursorY);
+      return getCellFromPoint(mobileCursorX, mobileCursorY);
+    }
+
+
     function stopMobileHold(){
       if(mobileHoldTimer){
         clearInterval(mobileHoldTimer);
@@ -1534,7 +1629,7 @@
       const modeLabel = mode === 'wood' ? 'Wood' : mode === 'leaf' ? 'Leaves' : 'Erase';
 
       if (isMobileLayout()) {
-        text += `Smooth mobile stroke · ${modeLabel} · size ${brushSize}`;
+        text += `Gesture mobile · ${modeLabel} · size ${brushSize}`;
         mobileStatusEl.textContent = text;
         return;
       }
@@ -1554,16 +1649,43 @@
       activePointerId = pointerId;
       lastPaintKey = null;
 
-      const cell = getCellFromPoint(clientX, clientY);
+      const cell = isMobileLayout()
+        ? getMobileGestureCell(clientX, clientY, true)
+        : getCellFromPoint(clientX, clientY);
+
       lastDrawCell = cell;
       lastMoveCell = cell ? `${cell[0]},${cell[1]}` : null;
       mobileCurrentCell = cell;
+      lastMobilePaintTs = performance.now();
 
       if(cell) paintAt(cell[0], cell[1]);
     }
 
     function movePointer(clientX, clientY){
       if(!isPointerDown || !drawEnabled) return;
+
+      if(isMobileLayout()){
+        const cell = getMobileGestureCell(clientX, clientY, false);
+        if(!cell) return;
+
+        const now = performance.now();
+        const cellKey = `${cell[0]},${cell[1]}`;
+        const distance = lastDrawCell
+          ? Math.max(Math.abs(cell[0] - lastDrawCell[0]), Math.abs(cell[1] - lastDrawCell[1]))
+          : 99;
+
+        // Skip tiny rapid wobble, but never skip a meaningful move.
+        if(cellKey === lastMoveCell) return;
+        if(now - lastMobilePaintTs < MOBILE_PAINT_INTERVAL_MS && distance < 2) return;
+
+        mobileCurrentCell = cell;
+        paintLine(lastDrawCell, cell);
+        lastMoveTs = now;
+        lastMobilePaintTs = now;
+        lastMoveCell = cellKey;
+        lastDrawCell = cell;
+        return;
+      }
 
       const cell = getCellFromPoint(clientX, clientY);
       if(!cell) return;
@@ -1572,12 +1694,7 @@
       if(lastMoveCell === cellKey) return;
 
       mobileCurrentCell = cell;
-
-      if(isMobileLayout()){
-        paintLine(lastDrawCell, cell);
-      } else {
-        paintAt(cell[0], cell[1]);
-      }
+      paintAt(cell[0], cell[1]);
 
       lastMoveTs = performance.now();
       lastMoveCell = cellKey;
@@ -1594,6 +1711,7 @@
       activePointerId = null;
       flushDetailedRender(20);
       stopMobileHold();
+      resetMobileCursor();
     }
 
     gridEl.addEventListener('pointerdown', (e) => {
@@ -1644,7 +1762,7 @@
       }
       fitGridToFrame();
       render();
-      updateStatusLine(gridChanged ? 'Grid adjusted for this screen.' : '');
+      updateStatusLine(gridChanged ? 'Simple mobile board loaded.' : '');
     });
 
     applyPreferredGridSize();
