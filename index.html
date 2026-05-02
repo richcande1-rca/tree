@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>Tree v5.3.1 Mobile Gesture Bonsai</title>
+  <title>Tree v5.3.6 Wider Desktop Test Build</title>
   <style>
     :root{
       --text:#efe5d2;
@@ -638,7 +638,7 @@
 
 
     .brush-cursor{
-      display:none;
+      display:block;
       position:fixed;
       left:0;
       top:0;
@@ -682,7 +682,7 @@
       .app{ gap:18px; padding:18px; }
     }
 
-    @media (max-width: 860px){
+    @media (max-width: 720px){
       :root{ --cell-size:6px; --scene-min:620px; }
       body{ overflow:hidden; min-height:100svh; }
       .app{
@@ -897,16 +897,16 @@
   </div>
 
   <script>
-    const DESKTOP_COLS = 72;
-    const DESKTOP_ROWS = 96;
-    const MOBILE_COLS = 32;
-    const MOBILE_ROWS = 44;
+    const DESKTOP_COLS = 132;
+    const DESKTOP_ROWS = 78;
+    const MOBILE_COLS = 48;
+    const MOBILE_ROWS = 64;
 
     let COLS = DESKTOP_COLS;
     let ROWS = DESKTOP_ROWS;
 
     function preferredGridSize(){
-      return window.matchMedia('(max-width: 860px)').matches
+      return window.matchMedia('(max-width: 720px)').matches
         ? { cols: MOBILE_COLS, rows: MOBILE_ROWS }
         : { cols: DESKTOP_COLS, rows: DESKTOP_ROWS };
     }
@@ -999,13 +999,12 @@
     }
 
     function getBrushOffsets(size){
-      const radiusMap = { 1: 0, 2: 1.05, 3: 1.45, 4: 1.9, 5: 2.35, 6: 2.85 };
+      const radiusMap = { 1: 0, 2: 0.85, 3: 1.2, 4: 1.55, 5: 1.9, 6: 2.2 };
 
-      // Phones get a true finger-painting brush map. The smallest mobile
-      // brush is intentionally chunky so touches feel intentional instead
-      // of like random pin-prick dots.
-      const mobileRadiusMap = { 1: 0.95, 2: 1.35, 3: 1.85, 4: 2.35, 5: 2.95, 6: 3.45 };
-      const isMobile = window.matchMedia('(max-width: 860px)').matches;
+      // Phones get a finger-friendly brush map, but keep the top end
+      // restrained so size 6 is a larger brush, not a paint roller.
+      const mobileRadiusMap = { 1: 0.65, 2: 0.95, 3: 1.25, 4: 1.55, 5: 1.9, 6: 2.2 };
+      const isMobile = window.matchMedia('(max-width: 720px)').matches;
       const radius = isMobile ? mobileRadiusMap[size] : radiusMap[size];
       const span = Math.ceil(radius);
       const offsets = [];
@@ -1569,7 +1568,7 @@
     }
 
     function isMobileLayout(){
-      return window.matchMedia('(max-width: 860px)').matches;
+      return window.matchMedia('(max-width: 720px)').matches;
     }
 
     function resetMobileCursor(){
@@ -1582,8 +1581,8 @@
       const rect = gridEl.getBoundingClientRect();
       const offsetY = 0;
 
-      // Keep the mobile gesture feel, but place the brush reticle directly
-      // under the fingertip instead of floating above it.
+      // Universal reticle painter: keep the brush directly under the pointer
+      // on phones, touchpads, and mouse viewports.
       let x = clientX;
       let y = clientY - offsetY;
 
@@ -1648,9 +1647,7 @@
       activePointerId = pointerId;
       lastPaintKey = null;
 
-      const cell = isMobileLayout()
-        ? getMobileGestureCell(clientX, clientY, true)
-        : getCellFromPoint(clientX, clientY);
+      const cell = getMobileGestureCell(clientX, clientY, true);
 
       lastDrawCell = cell;
       lastMoveCell = cell ? `${cell[0]},${cell[1]}` : null;
@@ -1663,39 +1660,25 @@
     function movePointer(clientX, clientY){
       if(!isPointerDown || !drawEnabled) return;
 
-      if(isMobileLayout()){
-        const cell = getMobileGestureCell(clientX, clientY, false);
-        if(!cell) return;
-
-        const now = performance.now();
-        const cellKey = `${cell[0]},${cell[1]}`;
-        const distance = lastDrawCell
-          ? Math.max(Math.abs(cell[0] - lastDrawCell[0]), Math.abs(cell[1] - lastDrawCell[1]))
-          : 99;
-
-        // Skip tiny rapid wobble, but never skip a meaningful move.
-        if(cellKey === lastMoveCell) return;
-        if(now - lastMobilePaintTs < MOBILE_PAINT_INTERVAL_MS && distance < 2) return;
-
-        mobileCurrentCell = cell;
-        paintLine(lastDrawCell, cell);
-        lastMoveTs = now;
-        lastMobilePaintTs = now;
-        lastMoveCell = cellKey;
-        lastDrawCell = cell;
-        return;
-      }
-
-      const cell = getCellFromPoint(clientX, clientY);
+      const cell = getMobileGestureCell(clientX, clientY, false);
       if(!cell) return;
 
+      const now = performance.now();
       const cellKey = `${cell[0]},${cell[1]}`;
-      if(lastMoveCell === cellKey) return;
+      const distance = lastDrawCell
+        ? Math.max(Math.abs(cell[0] - lastDrawCell[0]), Math.abs(cell[1] - lastDrawCell[1]))
+        : 99;
+
+      // Universal reticle painter: skip tiny rapid wobble, but never skip
+      // meaningful movement. Phones stay calmer; desktop remains precise.
+      const minDistance = isMobileLayout() ? 2 : 1;
+      if(cellKey === lastMoveCell) return;
+      if(now - lastMobilePaintTs < MOBILE_PAINT_INTERVAL_MS && distance < minDistance) return;
 
       mobileCurrentCell = cell;
-      paintAt(cell[0], cell[1]);
-
-      lastMoveTs = performance.now();
+      paintLine(lastDrawCell, cell);
+      lastMoveTs = now;
+      lastMobilePaintTs = now;
       lastMoveCell = cellKey;
       lastDrawCell = cell;
     }
@@ -1751,8 +1734,7 @@
     window.addEventListener('resize', () => {
       const gridChanged = applyPreferredGridSize();
       if(gridChanged){
-        // Desktop remains the full fine grid. Phones rebuild into a lighter,
-        // chunkier grid that is much easier to finger-paint. We clear on a
+        // Phones still rebuild into the mobile-sized board. We clear on a
         // layout-class switch rather than trying to remap every cell.
         filled.clear();
         leaves.clear();
@@ -1761,7 +1743,7 @@
       }
       fitGridToFrame();
       render();
-      updateStatusLine(gridChanged ? 'Simple mobile board loaded.' : '');
+      updateStatusLine(gridChanged ? 'Viewport board adjusted.' : '');
     });
 
     applyPreferredGridSize();
