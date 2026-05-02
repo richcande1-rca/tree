@@ -548,6 +548,20 @@
       transform:translate(-50%, -50%);
     }
 
+    .cell.fine-wood .wood,
+    .cell.fine-wood .conn,
+    .cell.fine-wood .diag{
+      opacity:.82;
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,.06),
+        0 1px 3px rgba(0,0,0,.14);
+    }
+
+    .cell.fine-wood .diag{
+      width:18%;
+      height:58%;
+    }
+
     .conn.up, .conn.down{
       left:50%;
       width:var(--conn-vw, 54%);
@@ -834,7 +848,7 @@
       </div>
 
       <div class="rules">
-        Paint wood, taper with smaller sizes, and leaf the outer air around the branches. On phones, the board uses a chunkier brush-grid and the carved controls move into a compact dock below the tree.
+        Paint wood, taper with smaller sizes, and use size 1 as twig scaffolding for leaf structure. On phones, the carved controls move into a compact dock below the tree.
       </div>
     </aside>
 
@@ -938,6 +952,7 @@
     let woodStyle = 'oak';
     let cells = [];
     let filled = new Set();
+    let fineWood = new Set();
     let leaves = new Set();
     let isPointerDown = false;
     let lastPaintKey = null;
@@ -1121,19 +1136,23 @@
         if(!inBounds(rr, cc)) continue;
         const cellKey = key(rr, cc);
         const wasWood = filled.has(cellKey);
+        const wasFine = fineWood.has(cellKey);
         const wasLeaf = leaves.has(cellKey);
 
         if(mode === 'wood'){
           filled.add(cellKey);
           leaves.delete(cellKey);
+          if(brushSize === 1) fineWood.add(cellKey);
+          else fineWood.delete(cellKey);
         } else if(mode === 'leaf'){
           if(canPlaceLeaf(rr, cc)) leaves.add(cellKey);
         } else {
           filled.delete(cellKey);
+          fineWood.delete(cellKey);
           leaves.delete(cellKey);
         }
 
-        if(wasWood !== filled.has(cellKey) || wasLeaf !== leaves.has(cellKey)){
+        if(wasWood !== filled.has(cellKey) || wasFine !== fineWood.has(cellKey) || wasLeaf !== leaves.has(cellKey)){
           fastDirty.add(cellKey);
           addDirtyAround(detailDirty, rr, cc, 2);
         }
@@ -1215,6 +1234,7 @@
 
     function clearTree(){
       filled.clear();
+      fineWood.clear();
       leaves.clear();
       render();
       updateReading();
@@ -1228,11 +1248,19 @@
 
       for(const r of baseRows){
         for(const c of baseCols){
-          if(inBounds(r,c)) filled.add(key(r,c));
+          if(inBounds(r,c)){
+            const k = key(r,c);
+            filled.add(k);
+            fineWood.delete(k);
+          }
         }
       }
       for(let r = ROWS - 5; r >= ROWS - 8; r--){
-        if(inBounds(r, center)) filled.add(key(r, center));
+        if(inBounds(r, center)){
+          const k = key(r, center);
+          filled.add(k);
+          fineWood.delete(k);
+        }
       }
 
       render();
@@ -1352,6 +1380,33 @@
       };
     }
 
+    function fineWoodShape(shape){
+      const next = { ...shape };
+      const vertical = shape.up || shape.down;
+      const horizontal = shape.left || shape.right;
+
+      // Size-1 wood is now treated as twig/leaf scaffolding: connected
+      // enough to build a branch skeleton, but visually quieter and thinner
+      // than trunk wood. This lets leaves sit on a fine hidden structure.
+      if(vertical && !horizontal){
+        next.w = 30;
+        next.h = 82;
+      } else if(horizontal && !vertical){
+        next.w = 82;
+        next.h = 30;
+      } else if(vertical && horizontal){
+        next.w = 58;
+        next.h = 58;
+      } else {
+        next.w = 42;
+        next.h = 42;
+      }
+
+      next.connVW = 26;
+      next.connHH = 26;
+      return next;
+    }
+
     function addConnector(cell, dir, shape){
       const conn = document.createElement('div');
       conn.className = `conn ${dir}`;
@@ -1413,8 +1468,11 @@
 
       if(isFilled(r,c)){
         cell.classList.add('filled');
+        const cellKey = key(r,c);
+        const isFineWood = fineWood.has(cellKey);
+        if(isFineWood) cell.classList.add('fine-wood');
         const color = woodColor(r,c);
-        const shape = getWoodShape(r,c);
+        const shape = isFineWood ? fineWoodShape(getWoodShape(r,c)) : getWoodShape(r,c);
         cell.style.setProperty('--wood-fill', color);
 
         const wood = document.createElement('div');
@@ -1737,6 +1795,7 @@
         // Phones still rebuild into the mobile-sized board. We clear on a
         // layout-class switch rather than trying to remap every cell.
         filled.clear();
+        fineWood.clear();
         leaves.clear();
         createGrid();
         updateReading();
